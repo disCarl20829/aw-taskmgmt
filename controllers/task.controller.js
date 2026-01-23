@@ -1,5 +1,7 @@
 const db = require('../db');
-const fs = require('fs');
+const fs = require('fs/promises');
+
+const { duplicateAttachmentFile } = require('../utilities/attachment.storage');
 
 //-----BOARD HANDLING-----\\
 
@@ -681,6 +683,173 @@ exports.removeAttachment = async (req, res) => {
         if (connection) await connection.rollback();
         console.error(err);
         res.status(500).json({ message: "Error Deleting Attachment: ", error: err.message });
+    } finally {
+        if (connection) await connection.release();
+    }
+}
+
+//-----ATTACHMENT HANDLING-----\\
+
+exports.moveCard = async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const { card_id, new_list_id, new_position } = req.body;
+
+        await connection.beginTransaction();
+
+        const [cardResult] = await connection.query('SELECT list_id, card_position FROM card WHERE card_id = ?',
+            [card_id]
+        )
+
+        if (cardResult.length === 0) {
+            await connection.rollback()
+            return res.status(404).json({ message: "Card not Found!" });
+        }
+
+        const [result] = await connection.query('UPDATE card SET list_id = ?, card_position = ? WHERE card_id = ?',
+            [new_list_id, new_position, card_id]
+        );
+
+        const [updateAttachments] = await connection.query('UPDATE attachments SET list_id = ? WHERE card_id = ?',
+            [new_list_id, card_id]
+        );
+
+        await connection.commit();
+
+        res.json({ message: "Card Moved Successfully!" });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error(err);
+        res.status(500).json({ message: "Card Move Failed: ", error: err.message });
+    } finally {
+        if (connection) await connection.release();
+    }
+}
+
+exports.duplicateList = async (req, res) => {
+    let connection;
+    const duplicatedFiles = [];
+
+    try {
+        connection = await db.getConnection();
+
+        const list_id = req.params.list_id;
+
+        await connection.beginTransaction();
+
+        const [listResult] = await connection.query('SELECT 1 FROM list WHERE list_id = ?',
+            [list_id]
+        );
+
+        if (listResult.length === 0) {
+            await connection.rollback()
+            return res.status(404).json({ message: "List not Found!" });
+        }
+
+        await connection.query('UPDATE list SET list_position = list_position + 1 WHERE board_id = (SELECT board_id FROM list WHERE list_id = ?) AND list_position > (SELECT list_position FROM list WHERE list_id = ?)',
+            [list_id, list_id]
+        )
+
+        const [result] = await connection.query('INSERT INTO list (board_id, list_name, list_position) SELECT board_id, CONCAT(list_name, " (Copy)"), list_position + 1 FROM list WHERE list_id = ?',
+            [list_id]
+        );
+
+        const new_list_id = result.insertId;
+
+        const [cards] = await connection.query('SELECT * FROM card WHERE list_id = ?',
+            [list_id]
+        );
+
+        for (const card of cards) {
+            const [newCardResult] = await connection.query('INSERT INTO card (list_id, card_name, card_description, card_position, due_date, due_time) VALUES (?, ?, ?, ?, ?, ?)',
+                [new_list_id, card.card_name, card.card_description, card.card_position, card.due_date, card.due_time]
+            );
+
+            const new_card_id = newCardResult.insertId;
+
+            const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?',
+                [card.card_id]
+            );
+
+            for (const attachment of attachments) {
+                let newFilePath = null;
+
+                if (attachment.attachment_type === 'file' && attachment.file_path) {
+                    newFilePath = await duplicateAttachmentFile(attachment.file_path, new_card_id);
+                    duplicatedFiles.push(newFilePath);
+                }
+
+                await connection.query('INSERT INTO attachments (board_id, list_id, card_id, attachment_name, file_path, external_url, attachment_type, mime_type, file_size, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [attachment.board_id, new_list_id, new_card_id, attachment.attachment_name, newFilePath, attachment.external_url, attachment.attachment_type, attachment.mime_type, attachment.file_size, attachment.created_by]
+                );
+            }
+        }
+
+        await connection.commit();
+
+        res.json({ message: "List Duplicated Successfully!" });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        await cleanupFile(duplicatedFiles);
+        console.error(err);
+        res.status(500).json({ message: "Duplicating List Failed: ", error: err.message });
+    } finally {
+        if (connection) await connection.release();
+    }
+}
+
+async function cleanupFile(filePath = []) {
+    for (const file of filePath) {
+        try {
+            await fs.unlink(file);
+        } catch {
+            console.error('Clean-up failed:', file);
+        }
+    }
+}
+
+exports.convertCard = async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const { board_id, item_id } = req.params;
+
+        await connection.beginTransaction();
+
+        const [itemData] = await connection.query(`SELECT t1.item_id, t1.item_text, t1.due_date, t1.due_time, t3.list_id, t4.board_id FROM checklist_items AS t1 JOIN checklist AS t2 ON t1.checklist_id = t2.checklist_id JOIN card AS t3 ON t2.card_id = t3.card_id JOIN list AS t4 ON t3.list_id = t4.list_id WHERE t1.item_id = ? AND t4.board_id = ?`,
+            [item_id, board_id]
+        );
+
+        if (itemData.length === 0) {
+            await connection.rollback()
+            return res.status(404).json({ message: "Checklist Item not Found!" });
+        }
+
+        const checklistItem = itemData[0];
+
+        const [positionResult] = await connection.query(
+            'SELECT MAX(card_position) as max_position FROM card WHERE list_id = ?',
+            [checklistItem.list_id]
+        );
+
+        const lastPosition = positionResult[0].max_position || 0;
+
+        await connection.query('INSERT INTO card (list_id, card_name, card_description, card_position, due_date, due_time) VALUES (?, ?, ?, ?, ?, ?)',
+            [checklistItem.list_id, checklistItem.item_text, '', lastPosition + 1, checklistItem.due_date, checklistItem.due_time]
+        );
+
+        await connection.commit();
+
+        res.json({ message: "Checklist Item Converted to Card Successfully!" });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error(err);
+        res.status(500).json({ message: "Checklist Card Retrieval Failed: ", error: err.message });
     } finally {
         if (connection) await connection.release();
     }

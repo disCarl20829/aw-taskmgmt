@@ -11,7 +11,7 @@ exports.register = async (req, res) => {
     try {
         connection = await db.getConnection();
 
-        const { user_name, user_email, user_password, user_img_path, user_department } = req.body;
+        const { user_name, user_email, user_password, user_department } = req.body;
 
         await connection.beginTransaction();
 
@@ -27,8 +27,8 @@ exports.register = async (req, res) => {
         const hashPassword = await bcrypt.hash(user_password, 10);
         const departments = Array.isArray(user_department) ? user_department : [user_department];
 
-        const [result] = await connection.query('INSERT INTO user (user_name, user_email, user_password, user_img_path) VALUES (?, ?, ?, ?)',
-            [user_name, user_email, hashPassword, user_img_path]
+        const [result] = await connection.query('INSERT INTO user (user_name, user_email, user_password) VALUES (?, ?, ?)',
+            [user_name, user_email, hashPassword]
         );
 
         const user_id = result.insertId;
@@ -78,13 +78,13 @@ exports.signin = async (req, res) => {
         );
 
         if (user.length === 0) {
-            return res.json({ message: "Invalid credentials!" });
+            return res.status(404).json({ message: "Invalid credentials!" });
         }
 
         const verify = await bcrypt.compare(user_password, user[0].user_password);
 
         if (!verify) {
-            return res.json({ message: "Invalid password!" });
+            return res.status(404).json({ message: "Invalid password!" });
         }
 
         req.session.user = {

@@ -4,3 +4,5 @@ public/uploads
 
 uploads/
 profile/
+
+*.env/
