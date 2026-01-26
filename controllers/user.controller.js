@@ -1,4 +1,5 @@
 const db = require('../db')
+const bcrypt = require('bcrypt');
 
 exports.terminate = async (req, res) => {
     let connection;
@@ -14,7 +15,7 @@ exports.terminate = async (req, res) => {
 
         await connection.beginTransaction();
 
-        await connection.query("DELETE FROM user WHERE user_id = ?", 
+        await connection.query("DELETE FROM user WHERE user_id = ?",
             [user_id]
         );
 
@@ -27,6 +28,68 @@ exports.terminate = async (req, res) => {
         if (connection) await connection.rollback();
         console.error(err);
         res.status(500).json({ message: "Termination Failed: ", error: err.message });
+    } finally {
+        if (connection) await connection.release();
+    }
+}
+
+exports.update = async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const user_id = req.session.user.user_id || req.body.user_id;
+
+        if (user_id !== req.session.user.user_id) {
+            return res.status(403).json({ message: "Unauthorized Action: Cannot Update Account." });
+        }
+
+        const { user_img_path, user_email, user_name, user_password } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query("SELECT user_name, user_email, user_img_path FROM user WHERE user_id = ?",
+            [user_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "User Not Found!" });
+        }
+
+        const updatedName = user_name && user_name.trim() !== '' ? user_name : row[0].user_name;
+        const updatedEmail = user_email && user_email.trim() !== '' ? user_email : row[0].user_email;
+        const updatedImgPath = user_img_path && user_img_path.trim() !== '' ? user_img_path : row[0].user_img_path;
+
+        await connection.query("UPDATE user SET user_name = ?, user_email = ?, user_img_path = ? WHERE user_id = ?",
+            [updatedName, updatedEmail, updatedImgPath, user_id]
+        );
+
+        if (user_password) {
+            const bcrypt = require('bcrypt');
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(user_password.trim(), saltRounds);
+
+            await connection.query("UPDATE user SET user_password = ? WHERE user_id = ?",
+                [hashedPassword, user_id]
+            );
+        }
+
+        await connection.commit();
+
+        req.session.user = {
+            user_id: user_id,
+            user_name: updatedName,
+            user_email: updatedEmail,
+            user_img_path: updatedImgPath
+        };
+
+        res.json({ message: "Your Information was Successfully Updated!" });
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error(err);
+        res.status(500).json({ message: "Update Failed: ", error: err.message });
     } finally {
         if (connection) await connection.release();
     }

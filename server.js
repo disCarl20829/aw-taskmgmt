@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./utilities/passport');
 
 const express = require('express');
 const session = require('express-session');
@@ -25,6 +26,10 @@ app.use(session({
     httpOnly: true
   }
 }));
+
+/* ---------- PASSPORT SETUP ---------- */
+app.use(require('passport').initialize());
+app.use(require('passport').session());
 
 /* ---------- STATIC FILES ---------- */
 app.use(express.static(path.join(__dirname, 'public')));

@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
         await connection.query('INSERT INTO board_visibility (board_id, user_id ) VALUES (?, ?)',
             [board_id, user_id]
         )
-        
+
         for (let i = 0; i < defaultLists.length; i++) {
             await connection.query(
                 'INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
@@ -91,7 +91,7 @@ exports.signin = async (req, res) => {
             user_id: user[0].user_id,
             user_name: user[0].user_name,
             user_email: user[0].user_email,
-            user_img_path: user[0].user_img_path
+            user_img_path: user[0].user_img_path    
         };
 
         res.json({ message: "Sign-in Successful!" });
@@ -105,3 +105,19 @@ exports.signout = (req, res) => {
     req.session.destroy();
     res.json({ message: "Signed out successfully!" });
 };
+
+exports.googleCallback = async (req, res) => {
+    const user = req.user;
+
+    req.session.user = {
+        user_id: user.user_id,
+        user_name: user.user_name,
+        user_email: user.user_email,
+        user_img_path: user.user_img_path
+    };
+
+    if (!req.session.user) return res.redirect('/index.html');
+    if (!user.password) return res.redirect('/set-password.html');
+
+    return res.redirect('/dashboard.html');
+}
