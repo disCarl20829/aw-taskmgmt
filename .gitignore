@@ -1,0 +1,16 @@
+node_modules/
+
+public/uploads
+
+uploads/
+profile/
+
+.env
+.env.*
+
+dist/
+build/
+
+frontend/node_modules/
+frontend/dist/
+frontend/build/
