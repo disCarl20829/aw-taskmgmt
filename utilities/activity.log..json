@@ -1,0 +1,70 @@
+{
+  "ATTACHMENT_ADDED": {
+    "template": "{user} added {attachment} attachment to this card",
+    "level": "info"
+  },
+  "ATTACHMENT_REMOVED": {
+    "template": "{user} removed {attachment} attachment from this card",
+    "level": "warning"
+  },
+  "CARD_ATTACHED": {
+    "template": "{user} attached an affiliated card {card}",
+    "level": "info"
+  },
+  "CARD_DELETED": {
+    "template": "{user} removed the affiliated card {card}",
+    "level": "danger"
+  },
+  "COPIED_CARD": {
+    "template": "{user} copied this card from {board} in list {list}",
+    "level": "warning"
+  },
+  "MOVED_CARD": {
+    "template": "{user} moved this card from {beforeList} to {afterList}",
+    "level": "warning"
+  },
+  "CREATED_CHECKLIST": {
+    "template": "{user} added a checklist to this card",
+    "level": "info"
+  },
+  "JOINED_CARD": {
+    "template": "{user} joined this card",
+    "level": "info"
+  },
+  "LEFT_CARD": {
+    "template": "{user} left this card",
+    "level": "warning"
+  },
+  "SET_DUE": {
+    "template": "{user} set this card to be due {date} at {time}",
+    "level": "info"
+  },
+  "REMOVED_DUE": {
+    "template": "{user} removed the due date from this card",
+    "level": "warning"
+  },
+  "CHANGED_DUE": {
+    "template": "{user} change the due date of this card to {date} at {time}",
+    "level": "warning"
+  },
+  "ADDED_ITEM": {
+    "template": "{user} added {item} to this card",
+    "level": "info"
+  },
+  "COMPLETED_ITEM": {
+    "template": "{user} set {item} as completed",
+    "level": "success"
+  },
+  "ASSIGNED_ITEM": {
+    "template": "{user} was assigned to {item} by {actor}",
+    "level": "info"
+  },
+  "UNASSIGNED_ITEM": {
+    "template": "{user} was assigned {item} by {actor}",
+    "level": "warning"
+  },
+  "OTHERS": {
+    "template": "{message}",
+    "level": "info"
+  }
+}

@@ -1,32 +1,37 @@
 const db = require('../db');
 
-exports.placeColorList = async (req, res) => {
+const catchAsync = require('../middleware/catch.middleware')
+
+exports.placeColorList = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
         const { board_id, list_id } = req.params;
-        const list_color = req.body.list_color;
+        const { list_color } = req.body;
 
         await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM list WHERE list_id = ?',
+            [list_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "List not found!" });
+        }
 
         await connection.query('UPDATE list SET list_color = ? WHERE board_id = ? AND list_id = ?',
             [list_color, board_id, list_id]
         )
 
         await connection.commit();
-        res.json({ message: "Successfully Placed Color for this List" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Placing Color for List Failed: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+        res.json({ message: "Successfully Placed Color for this List!" });
+    } finally { if (connection) await connection.release() }
+});
 
-exports.removeColorList = async (req, res) => {
+exports.removeColorList = catchAsync(async (req, res) => {
     let connection;
 
     try {
@@ -36,91 +41,51 @@ exports.removeColorList = async (req, res) => {
 
         await connection.beginTransaction();
 
+        const [row] = await connection.query('SELECT * from list WHERE list_id = ?',
+            [list_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "List not found!" });
+        }
+
         await connection.query('UPDATE list SET list_color = NULL WHERE board_id = ? AND list_id = ?',
             [board_id, list_id]
         )
 
         await connection.commit();
-        res.json({ message: "Successfully Placed Color for this List" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Removing Color for List Failed: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+        res.json({ message: "Successfully Removed Color for this List!" });
+    } finally { if (connection) await connection.release() }
+});
 
 //-----LABEL HANDLING-----\\
 
-exports.editLabel = async (req, res) => {
-    let connection;
-
-    try {
-        connection = await db.getConnection();
-
-        const board_id = req.params.board_id || req.body.board_id;
-        const label_name = req.body.label_name;
-
-        await connection.beginTransaction();
-
-        await connection.query('UPDATE labels SET label_name = ? WHERE board_id = ?',
-            [label_name, board_id]
-        )
-
-        await connection.commit();
-        res.json({ message: "Successfully Modified Label" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Unable to Modify this Label: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
-
-exports.removeLabel = async (req, res) => {
-    let connection;
-
-    try {
-        connection = await db.getConnection()
-
-        const board_id = req.params.board_id || req.body.board_id;
-        const label_id = req.body.label_id;
-
-        await connection.beginTransaction();
-
-        await connection.query('DELETE FROM labels WHERE board_id = ? AND label_id = ?',
-            [board_id, label_id]
-        )
-
-        await connection.commit();
-        res.json({ message: "Unlisted Label from Card" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Unable to Erase Label from Board" });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
-
-exports.listLabel = async (req, res) => {
+exports.listLabel = catchAsync(async (req, res) => {
     let connection
 
     try {
         connection = await db.getConnection();
 
         const { board_id, card_id } = req.params;
-        const label_color = req.body.label_color;
+        const { label_color } = req.body;
+        let label_id;
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query('INSERT INTO labels (board_id, label_color) VALUES (?, ?)',
+        const [row] = await connection.query('SELECT label_id FROM labels WHERE board_id = ? AND label_color = ?',
             [board_id, label_color]
-        );
+        )
 
-        const label_id = result.insertId;
+        if (row.length === 0) {
+            const [result] = await connection.query('INSERT INTO labels (board_id, label_color) VALUES (?, ?)',
+                [board_id, label_color]
+            );
+
+            label_id = result.insertId;
+        } else {
+            label_id = row[0].label_id;
+        }
 
         await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)',
             [card_id, label_id]
@@ -129,53 +94,105 @@ exports.listLabel = async (req, res) => {
         await connection.commit();
 
         res.json({ message: "Initiated Label for this Board!" })
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Labeling Card failed: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+    } finally { if (connection) await connection.release() }
+});
 
-exports.unlistLabel = async (req, res) => {
-    let connection ;
+exports.unlistLabel = catchAsync(async (req, res) => {
+    let connection;
 
     try {
         connection = await db.getConnection();
 
+        const board_id = req.params.board_id || req.body.board_id;
         const card_id = req.params.card_id || req.body.card_id;
-        const label_id = req.body.label_id;
+        const { label_id } = req.body;
 
         await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM labels WHERE label_id = ? AND board_id = ?',
+            [label_id, board_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Label Not Found!" });
+        }
 
         await connection.query('DELETE FROM card_labels WHERE card_id = ? AND label_id = ?',
             [card_id, label_id]
         )
 
         await connection.commit();
-        res.json({ message: "Unlisted Label from Card" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Unable to Unlist Label from Card: ", error: err.message  });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+        res.json({ message: "Unlisted Label from Card!" });
+    } finally { if (connection) await connection.release() }
+});
 
-exports.retrieveLabel = async (req, res) => {
+exports.editLabel = catchAsync(async (req, res) => {
+    let connection;
+
     try {
-        const board_id = req.params.board_id;
-        const list_id = req.body.list_id
+        connection = await db.getConnection();
 
-        const [result] = await db.query('SELECT t1.* FROM labels AS t1 JOIN card_labels t2 ON t1.label_id = t2.label_id WHERE t1.board_id = ? AND t1.label_id = ?',
-            [board_id, list_id]
+        const { board_id, label_id } = req.params
+        const { label_name } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM labels WHERE label_id = ? AND board_id = ?',
+            [label_id, board_id]
         )
 
-        res.json({ message: "Successfully Placed Color for this List" , color_list: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Placing Color for List Failed: ", error: err.message });
-    }
-}
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Label Not Found!" });
+        }
+
+        await connection.query('UPDATE labels SET label_name = ? WHERE label_id = ? AND board_id = ?',
+            [label_name, label_id, board_id]
+        )
+
+        await connection.commit();
+        res.json({ message: "Successfully Modified Label!" });
+    } finally { if (connection) await connection.release() }
+});
+
+exports.removeLabel = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection()
+
+        const board_id = req.params.board_id || req.body.board_id;
+        const { label_id } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM labels WHERE label_id = ? AND board_id = ?',
+            [label_id, board_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Label Not Found!" });
+        }
+
+        await connection.query('DELETE FROM labels WHERE board_id = ? AND label_id = ?',
+            [board_id, label_id]
+        )
+
+        await connection.commit();
+        res.json({ message: "Unlisted Label from Card." });
+    } finally { if (connection) await connection.release() }
+});
+
+
+exports.retrieveLabel = catchAsync(async (req, res) => {
+    const { board_id, card_id } = req.params;
+
+    const [result] = await db.query(
+        'SELECT t1.*, CASE WHEN t2.card_id IS NOT NULL THEN true ELSE false END AS assigned FROM labels AS t1 LEFT JOIN card_labels AS t2 ON t1.label_id = t2.label_id AND t2.card_id = ? WHERE t1.board_id = ?',
+        [card_id, board_id]
+    );
+
+    res.json({ message: "Successfully Placed Color for this List!", color_list: result });
+});

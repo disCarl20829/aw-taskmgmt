@@ -5,6 +5,11 @@ const bcrypt = require('bcrypt');
 
 const defaultLists = ['To Do', 'In Progress', 'Done'];
 
+exports.check = async (req, res) => {
+    if (req.session.user) return res.status(400).json({ message: "Invalid Action: You are Logged in." });
+    return res.status(200).json({ message: "Not Logged in." });
+}
+
 exports.register = async (req, res) => {
     if (req.session.user) return res.status(400).json({ message: "Invalid Action: You are Logged in." })
 
@@ -13,7 +18,7 @@ exports.register = async (req, res) => {
     try {
         connection = await db.getConnection();
 
-        const { user_name, user_email, user_password, user_department } = req.body;
+        const { user_name, user_email, user_password } = req.body;
 
         await connection.beginTransaction();
 
@@ -41,8 +46,8 @@ exports.register = async (req, res) => {
 
         const board_id = boardResult.insertId;
 
-        await connection.query('INSERT INTO board_visibility (board_id, user_id ) VALUES (?, ?)',
-            [board_id, user_id]
+        await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)',
+            [board_id, user_id, 'admin']
         )
 
         for (let i = 0; i < defaultLists.length; i++) {
@@ -58,12 +63,12 @@ exports.register = async (req, res) => {
         if (connection) await connection.rollback();
         console.error(err);
         res.status(500).json({ message: "Registration Failed: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
+    } finally { if (connection) await connection.release() }
 };
 
 exports.signin = async (req, res) => {
+    if (req.session.user) return res.status(400).json({ message: "Invalid Action: You are Logged in." })
+
     try {
         const { user_input, user_password } = req.body;
 
@@ -73,32 +78,32 @@ exports.signin = async (req, res) => {
         );
 
         if (user.length === 0) {
-            return res.status(404).json({ message: "Invalid credentials!" });
+            return res.status(401).json({ message: "Invalid User or Email!" });
         }
 
         const verify = await bcrypt.compare(user_password, user[0].user_password);
 
         if (!verify) {
-            return res.status(404).json({ message: "Invalid password!" });
+            return res.status(401).json({ message: "Invalid Password!" });
         }
 
         req.session.user = {
             user_id: user[0].user_id,
             user_name: user[0].user_name,
             user_email: user[0].user_email,
-            user_img_path: user[0].user_img_path    
+            user_img_path: user[0].user_img_path
         };
 
         res.json({ message: "Sign-in Successful!" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Sign-in Failed", error: err.message });
+        res.status(500).json({ message: "Sign-in Failed.", error: err.message });
     }
 };
 
 exports.signout = (req, res) => {
     req.session.destroy();
-    res.json({ message: "Signed out successfully!" });
+    res.json({ message: "Signed out Successfully!" });
 };
 
 exports.googleCallback = async (req, res) => {
@@ -111,7 +116,7 @@ exports.googleCallback = async (req, res) => {
         user_img_path: user.user_img_path
     };
 
-    const frontendUrl = process.env.FRONTEND_URL
+    const frontendUrl = process.env.FRONTEND_URL;
 
     if (!user.user_password) {
         return res.redirect(`${frontendUrl}/set-password`);
