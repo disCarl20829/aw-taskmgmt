@@ -16,45 +16,48 @@ function Landing() {
   // This object handles the stroke and the extra small sizing
   const buttonStyle = {
     backgroundColor: "#2c72b0", // Your custom button color
-    borderColor: "#2c72b0",     // White line stroke
+    borderColor: "#2c72b0", // White line stroke
     borderWidth: "1px",
     borderStyle: "solid",
-    fontSize: "0.85rem",        // Smaller text
-    padding: "5px 15px",        // Slim padding
+    fontSize: "0.85rem", // Smaller text
+    padding: "5px 15px", // Slim padding
     display: "flex",
     alignItems: "center",
-    color: "#FFFFFF"            // Ensures text is white
+    color: "#FFFFFF", // Ensures text is white
   };
   return (
     <>
       <div className="bg-container" style={{ backgroundImage: `url(${bg})` }}>
-        <div className="navbar-container py-2 d-flex align-items-center"
-        style={{ backgroundColor: '#003B6F' }}
+        <div
+          className="navbar-container py-2 d-flex align-items-center"
+          style={{ backgroundColor: "#003B6F" }}
         >
-
-         <Container className="d-flex justify-content-start gap-2">
-            <Button 
-              style={buttonStyle} 
-              className="btn-primary-blue" 
+          <Container className="d-flex justify-content-start gap-2">
+            <Button
+              style={buttonStyle}
+              className="btn-primary-blue"
               href="/signin"
             >
               Sign In
             </Button>
 
-            <Button 
-              style={buttonStyle} 
-              className="btn-soft-blue" 
+            <Button
+              style={buttonStyle}
+              className="btn-soft-blue"
               href="/signUp"
             >
               Sign Up
             </Button>
 
-            <Button 
-              style={buttonStyle} 
-              className="btn-google-blue" 
+            <Button
+              style={buttonStyle}
+              className="btn-google-blue"
               onClick={handleGoogleLogin}
             >
-              <i className="bi bi-google me-2" style={{ fontSize: '0.7rem' }}></i>
+              <i
+                className="bi bi-google me-2"
+                style={{ fontSize: "0.7rem" }}
+              ></i>
               Log in with Google
             </Button>
           </Container>
