@@ -41,8 +41,8 @@ exports.register = async (req, res) => {
 
         const board_id = boardResult.insertId;
 
-        await connection.query('INSERT INTO board_visibility (board_id, user_id ) VALUES (?, ?)',
-            [board_id, user_id]
+        await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)',
+            [board_id, user_id, 'admin']
         )
 
         for (let i = 0; i < defaultLists.length; i++) {

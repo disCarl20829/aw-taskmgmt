@@ -15,12 +15,11 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
   const [showClosedModal, setShowClosedModal] = useState(false);
   const target = useRef(null);
 
@@ -30,8 +29,12 @@ const Dashboard = () => {
   const handleCloseClosedModal = () => setShowClosedModal(false);
   const handleShowClosedModal = () => setShowClosedModal(true);
 
+  const handleLogout = () => {
+    console.log("Logging out...");
+  };
+
   const notificationPopover = (
-    <Popover id="popover-notifications" className="trello-popover">
+    <Popover id="popover-notifications" className="custom-popover">
       <Popover.Header
         as="h3"
         className="d-flex justify-content-between align-items-center"
@@ -51,7 +54,7 @@ const Dashboard = () => {
   );
 
   const accountPopover = (
-    <Popover id="popover-account" className="trello-popover account-width">
+    <Popover id="popover-account" className="custom-popover account-width">
       <Popover.Header className="text-secondary small bg-dark border-secondary">
         Account
       </Popover.Header>
@@ -64,22 +67,43 @@ const Dashboard = () => {
           </div>
         </div>
         <ListGroup variant="flush" className="account-list">
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/profile"
+            className="bg-dark text-light border-secondary"
+          >
             Profile and visibility
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+
+          <ListGroup.Item
+            action
+            className="bg-dark text-light border-secondary"
+          >
             Activity
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+
+          <ListGroup.Item
+            action
+            className="bg-dark text-light border-secondary"
+          >
             Card
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/settings"
+            className="bg-dark text-light border-secondary"
+          >
             Settings
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary border-top">
-            Theme
-          </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+
+          <ListGroup.Item
+            action
+            onClick={handleLogout}
+            className="bg-dark text-light border-secondary"
+          >
             Log out
           </ListGroup.Item>
         </ListGroup>
@@ -91,10 +115,9 @@ const Dashboard = () => {
     <div className="app-container">
       <Navbar
         variant="dark"
-        className="trello-nav border-bottom border-secondary px-3 d-flex justify-content-between"
+        className="app-nav border-bottom border-secondary px-3 d-flex justify-content-between"
       >
         <div className="d-flex align-items-center gap-1">
-          {/* Left Grid Menu Button */}
           <Button
             variant="link"
             ref={target}
@@ -112,20 +135,17 @@ const Dashboard = () => {
             </svg>
           </Button>
 
-          {/* Left boards Icon */}
-
           <NavLink
             to="/boards"
             className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
           >
             <i
               className="bi bi-columns-gap"
-              style={{ fontSize: "  18px", color: "#000000" }}
+              style={{ fontSize: "18px", color: "#000000" }}
             ></i>
           </NavLink>
         </div>
 
-        {/* CENTER SECTION: Search + Create Button */}
         <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
           <Form.Group
             className="mb-0 custom-search"
@@ -156,7 +176,6 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* RIGHT SECTION: Notifications + Avatar */}
         <Nav className="ms-0 align-items-center gap-3">
           <OverlayTrigger
             trigger="click"
@@ -238,7 +257,6 @@ const Dashboard = () => {
         <Container fluid className="content-area p-4">
           <section className="mb-5">
             <h6 className="text-secondary mb-3">Recently viewed</h6>
-
             <div className="board-tile gradient-purple">
               <span className="fw-bold">My board</span>
             </div>
@@ -406,8 +424,6 @@ const Dashboard = () => {
         rootClose={true}
         onHide={() => setShowOverlay(false)}
       >
-        {/* Menu dropdown */}
-
         {({ placement, arrowProps, show: _show, popper, ...props }) => (
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
@@ -415,23 +431,21 @@ const Dashboard = () => {
                 variant="primary"
                 className="text-start d-flex align-items-center gap-2"
               >
-                <i className="bi bi-house-door-fill"></i> {/* Home Icon */}
+                <i className="bi bi-house-door-fill"></i>
                 Home
               </Button>
-
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2"
               >
-                <i className="bi bi-person-badge-fill"></i> {/* Admin Icon */}
+                <i className="bi bi-person-badge-fill"></i>
                 Admin Panel
               </Button>
-
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
               >
-                <i className="bi bi-columns-gap"></i> {/* Boards Icon */}
+                <i className="bi bi-columns-gap"></i>
                 Boards
               </Button>
             </div>
