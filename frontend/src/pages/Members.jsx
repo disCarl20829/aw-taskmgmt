@@ -7,8 +7,8 @@ const Members = () => {
 
   return (
     <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
-      <nav className="sidebar p-4 border-end border-secondary">
-        <section className="mb-5">
+      <nav className="sidebar p-3 border-end border-secondary">
+        <section className="flex-column mb-4">
           <h6 className="sidebar-heading">Personal Settings</h6>
           <div className="d-flex flex-column gap-1 mt-3">
             <button className="sidebar-btn-link text-start">
@@ -32,13 +32,19 @@ const Members = () => {
             <span className="workspace-icon me-2">A</span>
             <span className="fw-bold">Animate Workplace</span>
           </button>
-          <div className="d-flex flex-column gap-1 ps-4">
-            <button className="sidebar-btn-link text-start">Boards</button>
-            <button className="sidebar-btn-link text-start active">
-              Members
-            </button>
-            <button className="sidebar-btn-link text-start">Settings</button>
-          </div>
+                  <div className="d-flex flex-column gap-1 ps-4">
+          <button className="sidebar-btn-link text-start">
+            <i className="bi bi-kanban me-2"></i> Boards
+          </button>
+
+          <button className="sidebar-btn-link text-start active">
+            <i className="bi bi-people me-2"></i> Members
+          </button>
+
+          <button className="sidebar-btn-link text-start">
+            <i className="bi bi-gear me-2"></i> Settings
+          </button>
+        </div>
         </section>
       </nav>
 

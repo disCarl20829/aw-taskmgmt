@@ -2,11 +2,9 @@
   width: 100%;
   background-color: #f8f9fa;
   padding: 1rem 2rem;
-
   display: flex;
   justify-content: flex-end;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-
   position: fixed;  
   top: 0;
   left: 0;
@@ -14,21 +12,17 @@
 }
 
 .bg-container {
-  background-image: url('../assets/index-background.jpg');
+  background-image: url('../assets/landing.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-
   height: 100vh;
   width: 100vw;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   position: relative;
-
   padding-top: 80px; 
 }
 
@@ -49,4 +43,5 @@
 .navbar-container .btn-success:hover {
   background-color: #157347;
 }
+  /* nav */
   
