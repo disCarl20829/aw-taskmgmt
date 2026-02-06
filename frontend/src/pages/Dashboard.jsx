@@ -34,12 +34,17 @@ const Dashboard = () => {
     <Popover id="popover-notifications" className="trello-popover">
       <Popover.Header
         as="h3"
-        className="d-flex justify-content-between align-items-center bg-dark text-light border-secondary"
+        className="d-flex justify-content-between align-items-center"
       >
         Notifications
-        <Form.Check type="switch" id="notif-switch" defaultChecked />
+        <Form.Check
+          type="switch"
+          id="notif-switch"
+          className="custom-switch"
+          defaultChecked
+        />
       </Popover.Header>
-      <Popover.Body className="text-center py-5 text-secondary bg-dark">
+      <Popover.Body className="text-center">
         No unread notification
       </Popover.Body>
     </Popover>
@@ -86,35 +91,73 @@ const Dashboard = () => {
     <div className="app-container">
       <Navbar
         variant="dark"
-        className="trello-nav border-bottom border-secondary px-3"
+        className="trello-nav border-bottom border-secondary px-3 d-flex justify-content-between"
       >
-        <Button
-          variant="link"
-          ref={target}
-          onClick={() => setShowOverlay(!showOverlay)}
-          className="p-0 me-3"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#8cc1e2"
+        <div className="d-flex align-items-center gap-1">
+          {/* Left Grid Menu Button */}
+          <Button
+            variant="link"
+            ref={target}
+            onClick={() => setShowOverlay(!showOverlay)}
+            className="p-0 me-2"
           >
-            <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
-          </svg>
-        </Button>
-        <Nav className="me-auto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="26px"
+              viewBox="0 -960 960 960"
+              width="26px"
+              fill="#f1f1f1"
+            >
+              <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
+            </svg>
+          </Button>
+
+          {/* Left boards Icon */}
+
+          <NavLink
+            to="/boards"
+            className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
+          >
+            <i
+              className="bi bi-columns-gap"
+              style={{ fontSize: "  18px", color: "#000000" }}
+            ></i>
+          </NavLink>
+        </div>
+
+        {/* CENTER SECTION: Search + Create Button */}
+        <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
+          <Form.Group
+            className="mb-0 custom-search"
+            style={{ maxWidth: "865px", width: "100%" }}
+          >
+            <div className="input-group">
+              <span className="input-group-text bg-dark border-secondary">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="#9ea3ac"
+                  viewBox="0 0 16 16"
+                >
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+                </svg>
+              </span>
+              <Form.Control
+                type="search"
+                placeholder="Search"
+                className="bg-dark text-light border-secondary"
+              />
+            </div>
+          </Form.Group>
+
           <Button variant="primary" size="sm" className="fw-bold px-3">
             Create
           </Button>
-        </Nav>
-        <Nav className="ms-auto align-items-center gap-3">
-          <Form.Control
-            type="search"
-            placeholder="Search"
-            className="search-input bg-dark text-light border-secondary"
-          />
+        </div>
+
+        {/* RIGHT SECTION: Notifications + Avatar */}
+        <Nav className="ms-0 align-items-center gap-3">
           <OverlayTrigger
             trigger="click"
             placement="bottom"
@@ -124,15 +167,16 @@ const Dashboard = () => {
             <Button variant="link" className="p-0 text-light">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                height="24px"
+                height="25px"
                 viewBox="0 -960 960 960"
-                width="24px"
+                width="25px"
                 fill="#f1f1f1"
               >
                 <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
               </svg>
             </Button>
           </OverlayTrigger>
+
           <OverlayTrigger
             trigger="click"
             placement="bottom"
@@ -171,14 +215,20 @@ const Dashboard = () => {
               <div className="workspace-icon bg-warning text-dark">A</div>
               Animate Workspace
             </Nav.Link>
-            <div className="ms-4">
+
+            <div className="d-flex flex-column gap-1 ps-4">
               <Nav.Link className="sidebar-link text-secondary py-1">
+                <i className="bi bi-kanban me-2"></i>
                 Boards
               </Nav.Link>
+
               <Nav.Link className="sidebar-link text-secondary py-1">
+                <i className="bi bi-people me-2"></i>
                 Members
               </Nav.Link>
+
               <Nav.Link className="sidebar-link text-secondary py-1">
+                <i className="bi bi-gear me-2"></i>
                 Settings
               </Nav.Link>
             </div>
@@ -188,6 +238,7 @@ const Dashboard = () => {
         <Container fluid className="content-area p-4">
           <section className="mb-5">
             <h6 className="text-secondary mb-3">Recently viewed</h6>
+
             <div className="board-tile gradient-purple">
               <span className="fw-bold">My board</span>
             </div>
@@ -352,7 +403,11 @@ const Dashboard = () => {
         target={target.current}
         show={showOverlay}
         placement="bottom-start"
+        rootClose={true}
+        onHide={() => setShowOverlay(false)}
       >
+        {/* Menu dropdown */}
+
         {({ placement, arrowProps, show: _show, popper, ...props }) => (
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
@@ -360,18 +415,23 @@ const Dashboard = () => {
                 variant="primary"
                 className="text-start d-flex align-items-center gap-2"
               >
+                <i className="bi bi-house-door-fill"></i> {/* Home Icon */}
                 Home
               </Button>
+
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2"
               >
+                <i className="bi bi-person-badge-fill"></i> {/* Admin Icon */}
                 Admin Panel
               </Button>
+
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
               >
+                <i className="bi bi-columns-gap"></i> {/* Boards Icon */}
                 Boards
               </Button>
             </div>

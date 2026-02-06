@@ -1,6 +1,6 @@
 import React from 'react';
 
-import '../../css/style.css';
+import '../../css/sign.css';
 
 function GoogleButton({ onClick }) {
   return (

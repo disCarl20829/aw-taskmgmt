@@ -4,11 +4,15 @@ import "../css/dashboard.css";
 
 const Members = () => {
   const [activeTab, setActiveTab] = useState("members");
+  const [showBoardsPopover, setShowBoardsPopover] = useState(false);
+  const [showAdminPopover, setShowAdminPopover] = useState(false);
+
+  const [showLeavePopover, setShowLeavePopover] = useState(false);
 
   return (
     <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
-      <nav className="sidebar p-4 border-end border-secondary">
-        <section className="mb-5">
+      <nav className="sidebar p-3 border-end border-secondary">
+        <section className="flex-column mb-4">
           <h6 className="sidebar-heading">Personal Settings</h6>
           <div className="d-flex flex-column gap-1 mt-3">
             <button className="sidebar-btn-link text-start">
@@ -32,17 +36,22 @@ const Members = () => {
             <span className="workspace-icon me-2">A</span>
             <span className="fw-bold">Animate Workplace</span>
           </button>
-          <div className="d-flex flex-column gap-1 ps-4">
-            <button className="sidebar-btn-link text-start">Boards</button>
-            <button className="sidebar-btn-link text-start active">
-              Members
-            </button>
-            <button className="sidebar-btn-link text-start">Settings</button>
-          </div>
+                  <div className="d-flex flex-column gap-1 ps-4">
+          <button className="sidebar-btn-link text-start">
+            <i className="bi bi-kanban me-2"></i> Boards
+          </button>
+
+          <button className="sidebar-btn-link text-start active">
+            <i className="bi bi-people me-2"></i> Members
+          </button>
+
+          <button className="sidebar-btn-link text-start">
+            <i className="bi bi-gear me-2"></i> Settings
+          </button>
+        </div>
         </section>
       </nav>
 
-      {/* Main Content Area */}
       <main className="flex-grow-1 p-5 position-relative">
         <button className="btn-close-custom">✕</button>
 
@@ -108,7 +117,7 @@ const Members = () => {
                   placeholder="Filter by name"
                 />
 
-                <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary">
+                <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary position-relative">
                   <div className="d-flex align-items-center">
                     <div className="avatar me-3">AW</div>
                     <div>
@@ -119,15 +128,137 @@ const Members = () => {
                     </div>
                   </div>
                   <div className="d-flex align-items-center gap-2">
-                    <button className="btn btn-secondary-custom btn-sm">
+                    <button
+                      className="btn btn-secondary-custom btn-sm"
+                      onClick={() => setShowBoardsPopover(!showBoardsPopover)}
+                    >
                       View boards (2)
                     </button>
-                    <button className="btn btn-secondary-custom btn-sm dropdown-toggle">
+
+                    {showBoardsPopover && (
+                      <div
+                        className="position-absolute bg-dark p-3 rounded shadow-lg border border-secondary"
+                        style={{
+                          width: "300px",
+                          zIndex: 1000,
+                          right: "240px",
+                          top: "-50px",
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <span className="fw-bold small text-secondary">
+                            Workspace boards
+                          </span>
+                          <span
+                            role="button"
+                            onClick={() => setShowBoardsPopover(false)}
+                            className="text-secondary"
+                          >
+                            ✕
+                          </span>
+                        </div>
+                        <p className="small mb-3">
+                          rawr is a member of the following Workspace boards:
+                        </p>
+                        <div className="d-flex align-items-center gap-2">
+                          <div
+                            style={{
+                              width: "40px",
+                              height: "32px",
+                              background:
+                                "linear-gradient(135deg, #a855f7 0%, #d946ef 100%)",
+                              borderRadius: "4px",
+                            }}
+                          ></div>
+                          <span className="fw-bold">My board</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      className="btn btn-secondary-custom btn-sm dropdown-toggle"
+                      onClick={() => setShowAdminPopover(!showAdminPopover)}
+                    >
                       Admin
                     </button>
-                    <button className="btn btn-secondary-custom btn-sm">
+
+                    {showAdminPopover && (
+                      <div
+                        className="position-absolute bg-dark rounded shadow-lg border border-secondary"
+                        style={{
+                          width: "320px",
+                          zIndex: 1001,
+                          right: "120px",
+                          top: "-100px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div className="p-3 d-flex justify-content-between align-items-center border-bottom border-secondary">
+                          <span className="fw-bold text-secondary text-center w-100">
+                            Change permissions
+                          </span>
+                          <span
+                            role="button"
+                            onClick={() => setShowAdminPopover(false)}
+                            className="text-secondary"
+                          >
+                            ✕
+                          </span>
+                        </div>
+                        <div
+                          className="p-3"
+                          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                        >
+                          <p className="small mb-0 text-secondary">
+                            You can't change roles because there must be at
+                            least one admin.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      className="btn btn-secondary-custom btn-sm"
+                      onClick={() => setShowLeavePopover(!showLeavePopover)}
+                    >
                       Leave... ✕
                     </button>
+
+                    {showLeavePopover && (
+                      <div
+                        className="position-absolute bg-dark rounded shadow-lg border border-secondary p-3"
+                        style={{
+                          width: "320px",
+                          zIndex: 1002,
+                          right: "0px",
+                          top: "-120px",
+                        }}
+                      >
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <span className="fw-bold text-secondary text-center w-100">
+                            Leave Workspace
+                          </span>
+                          <span
+                            role="button"
+                            onClick={() => setShowLeavePopover(false)}
+                            className="text-secondary"
+                          >
+                            ✕
+                          </span>
+                        </div>
+                        <p className="small mb-4 text-light fw-bold">
+                          You will become a guest of this Workspace and will
+                          only be able to access boards you are currently a
+                          member of.
+                        </p>
+                        <button
+                          className="btn btn-danger w-100 fw-bold"
+                          style={{ backgroundColor: "#ec6d6d", border: "none" }}
+                        >
+                          Leave Workspace
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
