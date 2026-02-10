@@ -8,6 +8,7 @@ const Members = () => {
   const [showAdminPopover, setShowAdminPopover] = useState(false);
 
   const [showLeavePopover, setShowLeavePopover] = useState(false);
+<<<<<<< Updated upstream
   const [showBoardsPopover, setShowBoardsPopover] = useState(false);
   const [showAdminPopover, setShowAdminPopover] = useState(false);
 
@@ -55,6 +56,46 @@ const Members = () => {
         </div>
         </section>
       </nav>
+=======
+
+  return (
+    <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
+      <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
+          <section className="mb-4">
+            <h6 className="sidebar-heading px-2">Personal Settings</h6>
+            <div className="d-flex flex-column gap-1 mt-3">
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-person me-2"></i> Profile and Visibilty
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-list-task me-2"></i> Activity
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-card-text me-2"></i> Card
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-gear me-2"></i> Settings
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h6 className="sidebar-heading px-2">Workspaces</h6>
+            <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+              <span className="workspace-icon me-2">A</span>
+              <span className="fw-bold">Animate Workspace</span>
+            </button>
+            <div className="d-flex flex-column gap-1 ps-4">
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-kanban me-2"></i> Boards</button>
+              <button className="sidebar-btn-link text-start active">
+                <i className="bi bi-people me-2"></i> Members</button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-gear me-2"></i> Settings</button>
+            </div>
+          </section>
+        </nav>
+>>>>>>> Stashed changes
 
       <main className="flex-grow-1 p-5 position-relative">
         <button className="btn-close-custom">✕</button>
@@ -100,11 +141,17 @@ const Members = () => {
                   members will automatically update your billing.
                 </p>
                 <hr className="border-secondary mb-4" />
+<<<<<<< Updated upstream
                 <hr className="border-secondary mb-4" />
 
                 <div className="mb-5">
                   <h5 className="fw-bold">Invite members to join you</h5>
                   <h5 className="fw-bold">Invite members to join you</h5>
+=======
+
+                <div className="mb-5">
+                  <h5 className="fw-bold">Invite members to join you</h5>
+>>>>>>> Stashed changes
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <p className="text-secondary small mb-0 w-75">
                       Anyone with an invite link can join this paid Workspace.
@@ -121,12 +168,18 @@ const Members = () => {
                 <input
                   type="text"
                   className="form-control bg-dark-input border-secondary w-50 mb-4"
+<<<<<<< Updated upstream
                   className="form-control bg-dark-input border-secondary w-50 mb-4"
+=======
+>>>>>>> Stashed changes
                   placeholder="Filter by name"
                 />
 
                 <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary position-relative">
+<<<<<<< Updated upstream
                 <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary position-relative">
+=======
+>>>>>>> Stashed changes
                   <div className="d-flex align-items-center">
                     <div className="avatar me-3">AW</div>
                     <div>
@@ -141,10 +194,13 @@ const Members = () => {
                       className="btn btn-secondary-custom btn-sm"
                       onClick={() => setShowBoardsPopover(!showBoardsPopover)}
                     >
+<<<<<<< Updated upstream
                     <button
                       className="btn btn-secondary-custom btn-sm"
                       onClick={() => setShowBoardsPopover(!showBoardsPopover)}
                     >
+=======
+>>>>>>> Stashed changes
                       View boards (2)
                     </button>
 
@@ -154,8 +210,13 @@ const Members = () => {
                         style={{
                           width: "300px",
                           zIndex: 1000,
+<<<<<<< Updated upstream
                           right: "240px",
                           top: "-50px",
+=======
+                          right: "170px",
+                          top: "-160px",
+>>>>>>> Stashed changes
                         }}
                       >
                         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -201,8 +262,13 @@ const Members = () => {
                         style={{
                           width: "320px",
                           zIndex: 1001,
+<<<<<<< Updated upstream
                           right: "120px",
                           top: "-100px",
+=======
+                          right: "87px",
+                          top: "-128px",
+>>>>>>> Stashed changes
                           overflow: "hidden",
                         }}
                       >
@@ -244,7 +310,11 @@ const Members = () => {
                           width: "320px",
                           zIndex: 1002,
                           right: "0px",
+<<<<<<< Updated upstream
                           top: "-120px",
+=======
+                          top: "-0px",
+>>>>>>> Stashed changes
                         }}
                       >
                         <div className="d-flex justify-content-between align-items-center mb-3">
