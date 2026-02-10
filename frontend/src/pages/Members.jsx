@@ -8,6 +8,10 @@ const Members = () => {
   const [showAdminPopover, setShowAdminPopover] = useState(false);
 
   const [showLeavePopover, setShowLeavePopover] = useState(false);
+  const [showBoardsPopover, setShowBoardsPopover] = useState(false);
+  const [showAdminPopover, setShowAdminPopover] = useState(false);
+
+  const [showLeavePopover, setShowLeavePopover] = useState(false);
 
   return (
     <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
@@ -95,9 +99,12 @@ const Members = () => {
                   boards and create new boards in the Workspace. Adding new
                   members will automatically update your billing.
                 </p>
+                <hr className="border-secondary mb-4" />
+                <hr className="border-secondary mb-4" />
 
                 <div className="mb-5">
-                  <h6 className="fw-bold">Invite members to join you</h6>
+                  <h5 className="fw-bold">Invite members to join you</h5>
+                  <h5 className="fw-bold">Invite members to join you</h5>
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <p className="text-secondary small mb-0 w-75">
                       Anyone with an invite link can join this paid Workspace.
@@ -113,10 +120,12 @@ const Members = () => {
                 <hr className="border-secondary mb-4" />
                 <input
                   type="text"
-                  className="form-control bg-dark-input border-secondary text-light w-50 mb-4"
+                  className="form-control bg-dark-input border-secondary w-50 mb-4"
+                  className="form-control bg-dark-input border-secondary w-50 mb-4"
                   placeholder="Filter by name"
                 />
 
+                <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary position-relative">
                 <div className="member-row d-flex align-items-center justify-content-between py-2 border-top border-bottom border-secondary position-relative">
                   <div className="d-flex align-items-center">
                     <div className="avatar me-3">AW</div>
@@ -128,6 +137,10 @@ const Members = () => {
                     </div>
                   </div>
                   <div className="d-flex align-items-center gap-2">
+                    <button
+                      className="btn btn-secondary-custom btn-sm"
+                      onClick={() => setShowBoardsPopover(!showBoardsPopover)}
+                    >
                     <button
                       className="btn btn-secondary-custom btn-sm"
                       onClick={() => setShowBoardsPopover(!showBoardsPopover)}

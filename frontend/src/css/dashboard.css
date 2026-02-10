@@ -962,16 +962,13 @@ table.table-dark {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
-/* --- Workspace Settings Specific Styles --- */
 
-/* Horizontal lines between settings sections */
 .settings-list .border-top {
-    border-color: #333c44 !important; /* Matches Trello's dark divider */
+    border-color: #333c44 !important;
     margin-top: 1rem;
     padding-top: 1rem;
 }
 
-/* The 'Change' buttons on the right side */
 .btn-secondary-custom {
     background-color: #2c333a;
     border: none;
@@ -987,20 +984,18 @@ table.table-dark {
     color: #ffffff;
 }
 
-/* Permission Text Colors (Public, Workspace, Private) */
 .text-success-custom {
-    color: #4bce97 !important; /* Trello Green */
+    color: #4bce97 !important; 
 }
 
 .text-warning-custom {
-    color: #f5cd47 !important; /* Trello Yellow/Orange */
+    color: #f5cd47 !important; 
 }
 
 .text-danger-custom {
-    color: #f87168 !important; /* Trello Red */
+    color: #f87168 !important; 
 }
 
-/* Metadata and descriptions */
 .text-dim {
     color: #9fadbc !important;
 }
@@ -1010,7 +1005,6 @@ table.table-dark {
     line-height: 20px;
 }
 
-/* Large Workspace Icon (The 'A' box in settings) */
 .workspace-icon-lg {
     width: 60px;
     height: 60px;
@@ -1023,19 +1017,16 @@ table.table-dark {
     color: #2f0036;
 }
 
-/* --- Layout Adjustments --- */
-
 .content-area {
     background-color: #1d2125;
     flex-grow: 1;
 }
 
 .home-main-content {
-    max-width: 850px; /* Aligns with the width seen in your video */
+    max-width: 850px;
     margin-left: 0;
 }
 
-/* Briefcase/Lock icon spacing */
 .bi-briefcase, .bi-lock-fill, .bi-pencil-fill {
     margin-left: 5px;
     vertical-align: middle;
@@ -1045,7 +1036,7 @@ table.table-dark {
     right: 0;
     top: 100%;
     width: 300px;
-    background-color: #282e33; /* Darker gray background from screenshot */
+    background-color: #282e33; 
     border: 1px solid #444c54;
     border-radius: 8px;
     padding: 12px;
