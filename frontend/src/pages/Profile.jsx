@@ -1,95 +1,224 @@
 import React from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
 
 const Profile = () => {
   return (
-    <div className="container-fluid p-0 d-flex bg-dark-main text-light vh-100">
-      {/* Sidebar Section */}
-      <nav className="sidebar p-4 border-end border-secondary">
-        <section className="mb-5">
-          <h6 className="sidebar-heading">Personal Settings</h6>
-          <div className="d-flex flex-column gap-1 mt-3">
-            <button className="sidebar-btn-link active text-start d-flex align-items-center">
-              <i className="bi bi-person me-2"></i> Profile and Visibility
-            </button>
-            <button className="sidebar-btn-link text-start d-flex align-items-center">
-              <i className="bi bi-list-task me-2"></i> Activity
-            </button>
-            <button className="sidebar-btn-link text-start d-flex align-items-center">
-              <i className="bi bi-card-text me-2"></i> Card
-            </button>
-            <button className="sidebar-btn-link text-start d-flex align-items-center">
-              <i className="bi bi-gear me-2"></i> Settings
-            </button>
-          </div>
-        </section>
+    <>
+      <style>{`
+        .bg-dark-main { background-color: #1d2125; }
+        
+        .sidebar {
+          width: 260px;
+          background-color: #1d2125;
+        }
+        
+        .sidebar-heading {
+          color: #a8b4c1;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        
+        .sidebar-btn-link {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 6px 12px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          transition: 0.2s;
+          width: 100%;
+          text-align: left;
+        }
+        
+        .sidebar-btn-link:hover {
+          background-color: #333c44;
+          color: #fff;
+        }
+        
+        .sidebar-btn-link.active {
+          background-color: #579dff29;
+          color: #579dff;
+          font-weight: 600;
+        }
+        
+        .workspace-icon {
+          width: 24px;
+          height: 24px;
+          background: linear-gradient(#e2b203, #ff9f1a);
+          color: #1d2125;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 3px;
+          font-weight: bold;
+        }
+        
+        .sidebar-workspace-btn {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 4px 8px;
+        }
+        
+        .content-area {
+          overflow-y: auto;
+          max-height: calc(100vh - 60px);
+        }
+        
+        .custom-input-sm {
+          background-color: #282e33;
+          border: 1px solid #3d444d;
+          color: #9fadbc;
+          font-size: 0.9rem;
+          padding: 8px 12px;
+        }
+        
+        .custom-input-sm:focus {
+          background-color: #282e33;
+          border-color: #579dff;
+          color: #fff;
+          outline: none;
+          box-shadow: none;
+        }
+        
+        .custom-input-sm::placeholder {
+          color: #6b7280;
+        }
+        
+        .tiny-label {
+          font-size: 0.75rem;
+          color: #9fadbc;
+        }
+        
+        .tiny-text {
+          font-size: 0.7rem;
+        }
+        
+        .text-dim {
+          color: #6b7280;
+        }
+        
+        .smaller {
+          font-size: 0.85rem;
+          color: #9fadbc;
+        }
+      `}</style>
 
-        <section>
-          <h6 className="sidebar-heading">Workspaces</h6>
-          <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
-            <span className="workspace-icon me-2">A</span>
-            <span className="fw-bold">Animate Workplace</span>
+      <div className="container-fluid p-0 d-flex bg-dark-main text-light vh-100">
+        {/* Sidebar Section */}
+        <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
+          <section className="mb-4">
+            <h6 className="sidebar-heading px-2">Personal Settings</h6>
+            <div className="d-flex flex-column gap-1 mt-3">
+              <button className="sidebar-btn-link text-start active">
+                <i className="bi bi-person me-2"></i> Profile and Visibility
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-list-task me-2"></i> Activity
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-card-text me-2"></i> Card
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-gear me-2"></i> Settings
+              </button>
+            </div>
+          </section>
+
+          <section>
+            <h6 className="sidebar-heading px-2">Workspaces</h6>
+            <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+              <span className="workspace-icon me-2">A</span>
+              <span className="fw-bold">Animate Workspace</span>
+            </button>
+            <div className="d-flex flex-column gap-1 ps-4">
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-kanban me-2"></i> Boards
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-people me-2"></i> Members
+              </button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-gear me-2"></i> Settings
+              </button>
+            </div>
+          </section>
+        </nav>
+
+        {/* Main Content Section */}
+        <div className="flex-grow-1 p-4 position-relative content-area d-flex align-items-center justify-content-center">
+          {/* Close Button - Absolute Position */}
+          <button
+            className="btn d-flex align-items-center justify-content-center rounded-circle position-absolute"
+            style={{
+              width: "32px",
+              height: "32px",
+              backgroundColor: "#282e33",
+              border: "none",
+              color: "#9fadbc",
+              padding: 0,
+              top: "20px",
+              right: "20px"
+            }}
+          >
+            <i className="bi bi-x-lg" style={{ fontSize: "14px" }}></i>
           </button>
-          <div className="d-flex flex-column gap-1 ps-4">
-            <button className="sidebar-btn-link text-start">Boards</button>
-            <button className="sidebar-btn-link text-start active">
-              Members
-            </button>
-            <button className="sidebar-btn-link text-start">Settings</button>
-          </div>
-        </section>
-      </nav>
 
-      {/* Main Content Section */}
-      <div className="flex-grow-1 p-5 position-relative content-area fade-in">
-        {/* Close Button */}
-        <button className="btn-close-custom">&times;</button>
-
-        <h2 className="h4 fw-bold text-white mb-5">Profile and Visibility</h2>
-
-        <div className="home-main-content">
-          <h5 className="text-white mb-2">About</h5>
-          <p className="smaller mb-4">
-            Required fields are marked with an asterisk{" "}
-            <span className="text-danger">*</span>
-          </p>
-
-          {/* Username Field */}
-          <div className="mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <label className="tiny-label fw-bold">
-                Username <span className="text-danger">*</span>
-              </label>
-              <span className="tiny-text text-dim"> Always public</span>
+          <div style={{ maxWidth: "600px", width: "100%" }}>
+            {/* Header with Title */}
+            <div className="mb-4">
+              <h5 className="fw-bold mb-0" style={{ fontSize: "1.1rem" }}>Profile and Visibility</h5>
             </div>
-            <input
-              type="text"
-              className="form-control shadow-none custom-input-sm w-100"
-              placeholder="Enter your username"
-            />
-          </div>
 
-          {/* Bio Field */}
-          <div className="mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <label className="tiny-label fw-bold">Bio</label>
-              <span className="tiny-text text-dim"> Always public</span>
+            <div className="home-main-content">
+              <h6 className="text-white mb-2" style={{ fontSize: "0.95rem" }}>About</h6>
+              <p className="smaller mb-4">
+                Required fields are marked with an asterisk{" "}
+                <span className="text-danger">*</span>
+              </p>
+
+              {/* Username Field */}
+              <div className="mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="tiny-label fw-bold">
+                    Username <span className="text-danger">*</span>
+                  </label>
+                  <span className="tiny-text text-dim">Always public</span>
+                </div>
+                <input
+                  type="text"
+                  className="form-control custom-input-sm w-100"
+                  placeholder="Enter your username"
+                />
+              </div>
+
+              {/* Bio Field */}
+              <div className="mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="tiny-label fw-bold">Bio</label>
+                  <span className="tiny-text text-dim">Always public</span>
+                </div>
+                <textarea
+                  className="form-control custom-input-sm w-100"
+                  rows="4"
+                  style={{ resize: "none" }}
+                  placeholder="Tell us about yourself..."
+                ></textarea>
+              </div>
+
+              {/* Save Button */}
+              <div className="d-flex justify-content-end mt-4">
+                <button className="btn btn-primary px-4 fw-bold" style={{ fontSize: "0.9rem" }}>
+                  Save
+                </button>
+              </div>
             </div>
-            <textarea
-              className="form-control shadow-none custom-input-sm w-100"
-              rows="4"
-              style={{ resize: "none" }}
-              placeholder="Tell us about yourself..."
-            ></textarea>
-          </div>
-
-          {/* Save Button */}
-          <div className="d-flex justify-content-end mt-4">
-            <button className="btn btn-primary px-4 fw-bold">Save</button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -15,8 +15,9 @@ body {
     background-color: #1d2125;
     height: 48px;
 
-
+}
 /*-------------------------icon with yellow------------------------------*/
+
 .custom-board-icon {
   width: 25px;
   height: 25px;
@@ -41,7 +42,7 @@ body {
 
 
 /*---------------------Sidebar---------------------------*/
-}
+
 .bg-dark-main { 
   background-color: #1d2125; 
 }

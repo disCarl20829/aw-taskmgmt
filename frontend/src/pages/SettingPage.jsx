@@ -50,7 +50,7 @@ const SettingsPage = () => {
             <h6 className="sidebar-heading px-2">Personal Settings</h6>
             <div className="d-flex flex-column gap-1 mt-3">
               <button className="sidebar-btn-link text-start">
-                <i className="bi bi-person me-2"></i> Profile and Visibilty
+                <i className="bi bi-person me-2"></i> Profile and Visibility
               </button>
               <button className="sidebar-btn-link text-start">
                 <i className="bi bi-list-task me-2"></i> Activity
@@ -81,11 +81,11 @@ const SettingsPage = () => {
           </section>
         </nav>
 
-        <main className="flex-grow-1 p-5 overflow-auto position-relative">
+        <main className="flex-grow-1 p-4 content-area position-relative">
           <button className="btn-close btn-close-white position-absolute top-0 end-0 m-4 shadow-none"></button>
 
-          <div className="mx-auto" style={{ maxWidth: "850px" }}>
-            <h3 className="mb-4 fw-bold">Settings</h3>
+          <div className="mb-4">
+            <h5 className="fw-bold" style={{ fontSize: "1.1rem" }}>Settings</h5>
 
             <div className="mb-2">
               <div className="settings-header-bar p-2 px-3 rounded-1 mb-3">
