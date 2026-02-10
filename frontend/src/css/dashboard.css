@@ -14,9 +14,168 @@ body {
 .trello-nav {
     background-color: #1d2125;
     height: 48px;
+
+
+/*-------------------------icon with yellow------------------------------*/
+.custom-board-icon {
+  width: 25px;
+  height: 25px;
+  background-color: #ffcc00; /* The yellow from your image */
+  border-radius:  5px;        /* Soft rounded corners */
+  text-decoration: none;     /* Removes link underline */
+  transition: opacity 0.2s;  /* Smooth hover effect */
 }
 
-/* Profile */
+.custom-board-icon:hover {
+  opacity: 0.9;              /* Slight visual feedback on hover */
+}
+
+.custom-board-icon {
+  width: 25px;
+  height: 25px;
+  background-color: #ffcc00; /* The yellow from your image */
+  border-radius:  5px;        /* Soft rounded corners */
+  text-decoration: none;     /* Removes link underline */
+  transition: opacity 0.2s;  /* Smooth hover effect */
+}
+
+
+/*---------------------Sidebar---------------------------*/
+}
+.bg-dark-main { 
+  background-color: #1d2125; 
+}
+
+.sidebar { 
+  width: 260px; 
+  background-color: #1d2125; 
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+.sidebar-heading { 
+  color: #a8b4c1; 
+  font-size: 0.75rem; 
+  font-weight: 700; 
+  text-transform: uppercase; 
+}
+
+.sidebar-btn-link { 
+  background: none; 
+  border: none; 
+  color: #9fadbc; 
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  font-size: 0.9rem; 
+  transition: 0.2s;
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar-btn-link:hover { 
+  background-color: #333c44; 
+  color: #fff; 
+}
+
+.sidebar-btn-link.active { 
+  background-color: #579dff29; 
+  color: #579dff; 
+  font-weight: 600; 
+}
+
+.workspace-icon { 
+  width: 24px; 
+  height: 24px; 
+  background: linear-gradient(#e2b203, #ff9f1a); 
+  color: #1d2125; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-radius: 3px; 
+  font-weight: bold; 
+}
+
+.sidebar-workspace-btn { 
+  background: none; 
+  border: none; 
+  color: #9fadbc; 
+  padding: 4px 8px; 
+}
+/*-------------------------sidebar---------------------------------*/
+
+/* ===== SIDEBAR BASE ===== */
+.sidebar {
+  width: 280px;
+  min-height: calc(100vh - 56px); /* below navbar */
+  background-color: #222120;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== MAIN NAV LINKS ===== */
+.sidebar .nav {
+  gap: 4px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+/* Active link layout only */
+.active-link {
+  background-color: #5773ff;
+}
+
+/* ===== SECTION LABEL (Workspaces) ===== */
+.sidebar-label {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+/* ===== WORKSPACE ITEM ===== */
+.sidebar .workspace-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Workspace row spacing */
+.sidebar .nav-link.d-flex {
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+/* ===== NESTED WORKSPACE LINKS ===== */
+.sidebar .ps-4 {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar .ps-4 .sidebar-link {
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
+/* ===== HOVER (layout-safe) ===== */
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+/*-------------------------Profile----------------------------------*/
 
 .trello-popover {
     background-color: #282e33 !important; 
@@ -88,7 +247,7 @@ body {
 }
 
 
-/* Notification*/
+/*-----------------------Notification--------------------------------*/
 
 .trello-popover {
     background-color: #282e33 !important; 
@@ -134,7 +293,7 @@ body {
     border-bottom-color: #282e33 !important;
 }
 
-/* Apps drop downmenu */
+/*--------------------------Apps drop downmenu---------------------------------*/
 
 .apps-dropdown {
     background-color: #282e33 !important; 
@@ -306,6 +465,41 @@ body {
     height: 32px;
     font-size: 14px;
 }
+
+/*-------------------------- Search bar-------------------------------------*/
+
+.input-group {
+    display: flex;
+    align-items: center; 
+    height: 31px;    
+    width: 100%;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    overflow: hidden;    
+}
+
+.input-group-text {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    padding: 0 10px;
+}
+
+.input-group .form-control {
+    height: 100%;
+    border: none !important;
+    background: transparent;
+    font-size: 0.85rem;
+    box-shadow: none !important;
+}
+.input-group .form-control::placeholder {
+    color: #6c757d; /* A slightly lighter grey than your text */
+    opacity: 1; 
+}
+
+/*--------------------------------------------------------------------------------*/
 
 .trello-popover {
     background-color: #282e33 !important; 
@@ -880,6 +1074,8 @@ table.table-dark {
 }
 
 /* Sidebar */
+
+
 .sidebar-container {
   width: 260px;
   background-color: #1e1e1e;
@@ -954,15 +1150,6 @@ table.table-dark {
   font-size: 13px !important;
 }
 
-.custom-search {
-  background-color: #3a3a3a;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: white;
-  padding: 5px 10px 5px 30px;
-  width: 250px;
-  font-size: 13px;
-}
 
 /* Boards Grid */
 .boards-grid {

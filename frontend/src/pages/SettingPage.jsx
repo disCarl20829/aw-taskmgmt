@@ -68,12 +68,15 @@ const SettingsPage = () => {
             <h6 className="sidebar-heading px-2">Workspaces</h6>
             <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
               <span className="workspace-icon me-2">A</span>
-              <span className="fw-bold">Animate Workplace</span>
+              <span className="fw-bold">Animate Workspace</span>
             </button>
             <div className="d-flex flex-column gap-1 ps-4">
-              <button className="sidebar-btn-link text-start">Boards</button>
-              <button className="sidebar-btn-link text-start">Members</button>
-              <button className="sidebar-btn-link text-start">Settings</button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-kanban me-2"></i> Boards</button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-people me-2"></i> Members</button>
+              <button className="sidebar-btn-link text-start">
+                <i className="bi bi-gear me-2"></i> Settings</button>
             </div>
           </section>
         </nav>
@@ -81,7 +84,7 @@ const SettingsPage = () => {
         <main className="flex-grow-1 p-5 overflow-auto position-relative">
           <button className="btn-close btn-close-white position-absolute top-0 end-0 m-4 shadow-none"></button>
 
-          <div className="mx-auto" style={{ maxWidth: "750px" }}>
+          <div className="mx-auto" style={{ maxWidth: "850px" }}>
             <h3 className="mb-4 fw-bold">Settings</h3>
 
             <div className="mb-2">

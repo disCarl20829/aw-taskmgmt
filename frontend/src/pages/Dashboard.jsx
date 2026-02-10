@@ -15,12 +15,11 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [showOverlay, setShowOverlay] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
   const [showClosedModal, setShowClosedModal] = useState(false);
   const target = useRef(null);
 
@@ -29,6 +28,10 @@ const Dashboard = () => {
 
   const handleCloseClosedModal = () => setShowClosedModal(false);
   const handleShowClosedModal = () => setShowClosedModal(true);
+
+  const handleLogout = () => {
+    console.log("Logging out...");
+  };
 
   const notificationPopover = (
     <Popover id="popover-notifications" className="trello-popover">
@@ -64,22 +67,33 @@ const Dashboard = () => {
           </div>
         </div>
         <ListGroup variant="flush" className="account-list">
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/profile"
+            className="bg-dark text-light border-secondary"
+          >
             Profile and visibility
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item action className="bg-dark text-light border-secondary">
             Activity
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item action className="bg-dark text-light border-secondary">
             Card
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/settings"
+            className="bg-dark text-light border-secondary"
+          >
             Settings
           </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary border-top">
-            Theme
-          </ListGroup.Item>
-          <ListGroup.Item className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            onClick={handleLogout}
+            className="bg-dark text-light border-secondary"
+          >
             Log out
           </ListGroup.Item>
         </ListGroup>
@@ -87,212 +101,384 @@ const Dashboard = () => {
     </Popover>
   );
 
+  // Board tile inline styles
+  const boardTileStyle = {
+    width: "180px",
+    height: "100px",
+    borderRadius: "10px",
+    position: "relative",
+    cursor: "pointer",
+    overflow: "hidden",
+    transition: "transform 0.2s, box-shadow 0.2s",
+  };
+
+  const boardTileGradientStyle = {
+    ...boardTileStyle,
+    background: "linear-gradient(180deg, #a855f7 0%, #7c3aed 100%)",
+  };
+
+  const boardTitleOverlayStyle = {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "rgba(0, 0, 0, 0.4)",
+    backdropFilter: "blur(4px)",
+    padding: "10px 12px",
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: "0.9rem",
+  };
+
+  const createNewBoardStyle = {
+    ...boardTileStyle,
+    backgroundColor: "#282e33",
+    color: "#9fadbc",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.85rem",
+  };
+
+  // Workspace action button styles
+  const workspaceButtonStyle = {
+    backgroundColor: "#282e33",
+    border: "1px solid #3d444d",
+    color: "#9fadbc",
+    fontSize: "0.8rem",
+    padding: "6px 14px",
+    borderRadius: "4px",
+    fontWeight: "500",
+    transition: "all 0.2s",
+  };
+
   return (
-    <div className="app-container">
-      <Navbar
-        variant="dark"
-        className="trello-nav border-bottom border-secondary px-3 d-flex justify-content-between"
-      >
-        <div className="d-flex align-items-center gap-1">
-          {/* Left Grid Menu Button */}
-          <Button
-            variant="link"
-            ref={target}
-            onClick={() => setShowOverlay(!showOverlay)}
-            className="p-0 me-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="26px"
-              viewBox="0 -960 960 960"
-              width="26px"
-              fill="#f1f1f1"
+    <>
+      <style>{`
+        .bg-dark-main { background-color: #1d2125; }
+
+        .sidebar {
+          width: 260px;
+          background-color: #1d2125;
+        }
+
+        .sidebar-heading {
+          color: #a8b4c1;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .sidebar-btn-link {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 6px 12px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          transition: 0.2s;
+          width: 100%;
+          text-align: left;
+        }
+
+        .sidebar-btn-link:hover {
+          background-color: #333c44;
+          color: #fff;
+        }
+
+        .sidebar-btn-link.active {
+          background-color: #579dff29;
+          color: #579dff;
+          font-weight: 600;
+        }
+
+        .workspace-icon {
+          width: 24px;
+          height: 24px;
+          background: linear-gradient(#e2b203, #ff9f1a);
+          color: #1d2125;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 3px;
+          font-weight: bold;
+        }
+
+        .workspace-icon-lg {
+          width: 36px;
+          height: 36px;
+          background: linear-gradient(#e2b203, #ff9f1a);
+          color: #1d2125;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+          font-weight: bold;
+          font-size: 1.1rem;
+        }
+
+        .sidebar-workspace-btn {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 4px 8px;
+        }
+
+        .section-heading {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #9fadbc;
+          font-size: 0.8rem;
+          font-weight: 600;
+          margin-bottom: 10px;
+        }
+
+        .content-area {
+          overflow-y: auto;
+          max-height: calc(100vh - 60px);
+        }
+
+        .board-tile-hover:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .create-new-hover:hover {
+          background-color: #333c44 !important;
+          transform: translateY(-2px);
+        }
+
+        .workspace-action-btn {
+          background-color: #282e33;
+          border: 1px solid #3d444d;
+          color: #9fadbc;
+          font-size: 0.8rem;
+          padding: 6px 14px;
+          border-radius: 4px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .workspace-action-btn:hover {
+          background-color: #333c44;
+          border-color: #4a5159;
+          color: #fff;
+        }
+
+        .workspace-action-btn:active {
+          background-color: #3d444d;
+        }
+      `}</style>
+
+      <div className="app-container">
+        {/* NAVBAR */}
+        <Navbar
+          variant="dark"
+          className="trello-nav border-bottom border-secondary px-3 d-flex justify-content-between"
+        >
+          <div className="d-flex align-items-center gap-1">
+            <Button
+              variant="link"
+              ref={target}
+              onClick={() => setShowOverlay(!showOverlay)}
+              className="p-0 me-2"
             >
-              <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
-            </svg>
-          </Button>
-
-          {/* Left boards Icon */}
-
-          <NavLink
-            to="/boards"
-            className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
-          >
-            <i
-              className="bi bi-columns-gap"
-              style={{ fontSize: "  18px", color: "#000000" }}
-            ></i>
-          </NavLink>
-        </div>
-
-        {/* CENTER SECTION: Search + Create Button */}
-        <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
-          <Form.Group
-            className="mb-0 custom-search"
-            style={{ maxWidth: "865px", width: "100%" }}
-          >
-            <div className="input-group">
-              <span className="input-group-text bg-dark border-secondary">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  fill="#9ea3ac"
-                  viewBox="0 0 16 16"
-                >
-                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
-                </svg>
-              </span>
-              <Form.Control
-                type="search"
-                placeholder="Search"
-                className="bg-dark text-light border-secondary"
-              />
-            </div>
-          </Form.Group>
-
-          <Button variant="primary" size="sm" className="fw-bold px-3">
-            Create
-          </Button>
-        </div>
-
-        {/* RIGHT SECTION: Notifications + Avatar */}
-        <Nav className="ms-0 align-items-center gap-3">
-          <OverlayTrigger
-            trigger="click"
-            placement="bottom"
-            overlay={notificationPopover}
-            rootClose
-          >
-            <Button variant="link" className="p-0 text-light">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                height="25px"
+                height="26px"
                 viewBox="0 -960 960 960"
-                width="25px"
+                width="26px"
                 fill="#f1f1f1"
               >
-                <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
+                <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
               </svg>
             </Button>
-          </OverlayTrigger>
 
-          <OverlayTrigger
-            trigger="click"
-            placement="bottom"
-            overlay={accountPopover}
-            rootClose
-          >
-            <div
-              className="avatar-circle bg-info"
-              style={{ cursor: "pointer" }}
+            <NavLink
+              to="/boards"
+              className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
             >
-              U
-            </div>
-          </OverlayTrigger>
-        </Nav>
-      </Navbar>
-
-      <div className="main-wrapper d-flex">
-        <div className="sidebar p-3 border-end border-secondary">
-          <Nav className="flex-column mb-4">
-            <Nav.Link className="sidebar-link active-link text-light">
-              Boards
-            </Nav.Link>
-            <Nav.Link
-              as={NavLink}
-              to="/home"
-              className="sidebar-link text-secondary"
-            >
-              Home
-            </Nav.Link>
-          </Nav>
-          <div className="sidebar-label text-secondary small fw-bold mb-2">
-            Workspaces
+              <i
+                className="bi bi-columns-gap"
+                style={{ fontSize: "18px", color: "#1d2125" }}
+              ></i>
+            </NavLink>
           </div>
-          <Nav className="flex-column">
-            <Nav.Link className="sidebar-link d-flex align-items-center gap-2 text-light">
-              <div className="workspace-icon bg-warning text-dark">A</div>
-              Animate Workspace
-            </Nav.Link>
 
-            <div className="d-flex flex-column gap-1 ps-4">
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-kanban me-2"></i>
-                Boards
-              </Nav.Link>
-
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-people me-2"></i>
-                Members
-              </Nav.Link>
-
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-gear me-2"></i>
-                Settings
-              </Nav.Link>
-            </div>
-          </Nav>
-        </div>
-
-        <Container fluid className="content-area p-4">
-          <section className="mb-5">
-            <h6 className="text-secondary mb-3">Recently viewed</h6>
-
-            <div className="board-tile gradient-purple">
-              <span className="fw-bold">My board</span>
-            </div>
-          </section>
-
-          <section>
-            <div className="d-flex align-items-center mb-4">
-              <div className="workspace-icon-lg bg-warning text-dark me-3">
-                A
+          {/* CENTER SECTION: Search + Create Button */}
+          <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
+            <Form.Group
+              className="mb-0 custom-search"
+              style={{ maxWidth: "865px", width: "100%" }}
+            >
+              <div className="input-group">
+                <span className="input-group-text bg-dark border-secondary">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    fill="#9ea3ac"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+                  </svg>
+                </span>
+                <Form.Control
+                  type="search"
+                  placeholder="Search"
+                  className="bg-dark text-light border-secondary"
+                />
               </div>
-              <h5 className="section-title mb-0 text-light">
-                Animate Workspace
-              </h5>
-              <div className="ms-auto d-flex gap-2">
-                <Button variant="secondary" size="sm">
-                  Boards
-                </Button>
-                <Button variant="secondary" size="sm">
-                  Members
-                </Button>
-                <Button variant="secondary" size="sm">
-                  Settings
-                </Button>
-              </div>
-            </div>
+            </Form.Group>
 
-            <Row className="g-3">
-              <Col xs="auto">
-                <div className="board-tile gradient-purple">
-                  <span className="fw-bold">My board</span>
-                </div>
-              </Col>
-              <Col xs="auto">
-                <div
-                  className="board-tile create-new"
-                  onClick={handleShowModal}
+            <Button variant="primary" size="sm" className="fw-bold px-3">
+              Create
+            </Button>
+          </div>
+
+          {/* RIGHT SECTION: Notifications + Avatar */}
+          <Nav className="ms-0 align-items-center gap-3">
+            <OverlayTrigger
+              trigger="click"
+              placement="bottom"
+              overlay={notificationPopover}
+              rootClose
+            >
+              <Button variant="link" className="p-0 text-light">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="25px"
+                  viewBox="0 -960 960 960"
+                  width="25px"
+                  fill="#f1f1f1"
                 >
-                  Create new board
-                </div>
-              </Col>
-            </Row>
-
-            <div className="mt-4">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="bg-dark border-secondary text-secondary"
-                onClick={handleShowClosedModal}
-              >
-                View all closed boards
+                  <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
+                </svg>
               </Button>
-            </div>
-          </section>
-        </Container>
+            </OverlayTrigger>
+
+            <OverlayTrigger
+              trigger="click"
+              placement="bottom"
+              overlay={accountPopover}
+              rootClose
+            >
+              <div
+                className="avatar-circle bg-info"
+                style={{ cursor: "pointer" }}
+              >
+                U
+              </div>
+            </OverlayTrigger>
+          </Nav>
+        </Navbar>
+
+        <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
+          {/* SIDEBAR */}
+          <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
+            <section className="mb-4">
+              <div className="d-flex flex-column gap-1 mt-3">
+                <button className="sidebar-btn-link text-start">
+                  <i className="bi bi-columns-gap me-2"></i>Boards
+                </button>
+                <button className="sidebar-btn-link text-start">
+                  <i className="bi bi-activity me-2"></i>Home
+                </button>
+              </div>
+            </section>
+
+            <section>
+              <h6 className="sidebar-heading px-2">Workspaces</h6>
+              <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+                <span className="workspace-icon me-2">A</span>
+                <span className="fw-bold">Animate Workspace</span>
+              </button>
+              <div className="d-flex flex-column gap-1 ps-4">
+                <button className="sidebar-btn-link text-start">
+                  <i className="bi bi-kanban me-2"></i> Boards
+                </button>
+                <button className="sidebar-btn-link text-start">
+                  <i className="bi bi-people me-2"></i> Members
+                </button>
+                <button className="sidebar-btn-link text-start">
+                  <i className="bi bi-gear me-2"></i> Settings
+                </button>
+              </div>
+            </section>
+          </nav>
+
+          <Container fluid className="content-area p-4" style={{ maxWidth: "1200px" }}>
+            {/* Recently Viewed Section */}
+            <section className="mb-4">
+              <div className="section-heading"style={{ fontSize: "1rem" }}>
+                <i className="bi bi-clock-history"></i>
+                <span>Recently viewed</span>
+              </div>
+
+              <Row className="g-2">
+                <Col xs="auto">
+                  <div style={boardTileGradientStyle} className="board-tile-hover">
+                    <div style={boardTitleOverlayStyle}>My board</div>
+                  </div>
+                </Col>
+              </Row>
+            </section>
+
+            {/* Workspace Section */}
+            <section>
+              <div className="d-flex align-items-center mb-3">
+                <div className="workspace-icon-lg me-3">A</div>
+                <h5 className="mb-0 text-light fw-bold" style={{ fontSize: "1.1rem" }}>
+                  Animate Workspace
+                </h5>
+                <div className="ms-auto d-flex gap-2">
+                  <button className="workspace-action-btn">
+                    <i className="bi bi-kanban me-1" style={{ fontSize: "0.75rem" }}></i>
+                    Boards
+                  </button>
+                  <button className="workspace-action-btn">
+                    <i className="bi bi-people me-1" style={{ fontSize: "0.75rem" }}></i>
+                    Members
+                  </button>
+                  <button className="workspace-action-btn">
+                    <i className="bi bi-gear me-1" style={{ fontSize: "0.75rem" }}></i>
+                    Settings
+                  </button>
+                </div>
+              </div>
+
+              <Row className="g-2">
+                <Col xs="auto">
+                  <div style={boardTileGradientStyle} className="board-tile-hover">
+                    <div style={boardTitleOverlayStyle}>My board</div>
+                  </div>
+                </Col>
+                <Col xs="auto">
+                  <div
+                    style={createNewBoardStyle}
+                    className="create-new-hover"
+                    onClick={handleShowModal}
+                  >
+                    Create new board
+                  </div>
+                </Col>
+              </Row>
+
+              <div className="mt-5">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-dark border-secondary text-secondary"
+                  style={{ fontSize: "0.8rem" }}
+                  onClick={handleShowClosedModal}
+                >
+                  View all closed boards
+                </Button>
+              </div>
+            </section>
+          </Container>
+        </div>
       </div>
 
       <Modal
@@ -323,7 +509,7 @@ const Dashboard = () => {
                       className="color-swatch"
                       style={{ backgroundColor: color }}
                     ></div>
-                  ),
+                  )
                 )}
               </div>
             </Form.Group>
@@ -406,8 +592,6 @@ const Dashboard = () => {
         rootClose={true}
         onHide={() => setShowOverlay(false)}
       >
-        {/* Menu dropdown */}
-
         {({ placement, arrowProps, show: _show, popper, ...props }) => (
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
@@ -415,7 +599,7 @@ const Dashboard = () => {
                 variant="primary"
                 className="text-start d-flex align-items-center gap-2"
               >
-                <i className="bi bi-house-door-fill"></i> {/* Home Icon */}
+                <i className="bi bi-house-door-fill"></i>
                 Home
               </Button>
 
@@ -423,7 +607,7 @@ const Dashboard = () => {
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2"
               >
-                <i className="bi bi-person-badge-fill"></i> {/* Admin Icon */}
+                <i className="bi bi-person-badge-fill"></i>
                 Admin Panel
               </Button>
 
@@ -431,14 +615,14 @@ const Dashboard = () => {
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
               >
-                <i className="bi bi-columns-gap"></i> {/* Boards Icon */}
+                <i className="bi bi-columns-gap"></i>
                 Boards
               </Button>
             </div>
           </div>
         )}
       </Overlay>
-    </div>
+    </>
   );
 };
 

@@ -60,7 +60,7 @@ const Settings = () => {
         <h6
           className="sidebar-heading text-secondary fw-bold text-uppercase mb-3"
           style={{ fontSize: "11px" }}
-        >
+        > 
           Personal Settings
         </h6>
         <div className="d-flex flex-column gap-1 mt-3 mb-5">
@@ -73,6 +73,7 @@ const Settings = () => {
           <button className="sidebar-btn-link text-start btn btn-link text-light text-decoration-none p-2 opacity-75 d-flex align-items-center">
             <CardIcon /> <span className="ms-2">Card</span>
           </button>
+
           <button className="sidebar-btn-link text-start btn btn-link text-light text-decoration-none p-2 opacity-75 d-flex align-items-center">
             <GearIcon size={16} /> <span className="ms-2">Settings</span>
           </button>
