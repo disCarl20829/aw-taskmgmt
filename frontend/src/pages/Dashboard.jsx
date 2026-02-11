@@ -396,8 +396,7 @@ const Dashboard = () => {
 
           {/* CENTER SECTION: Search + Create Button */}
           <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
-            <Form.Group
-              className="mb-0 custom-search"
+            <Form.Group className="mb-0 custom-search"
               style={{ maxWidth: "865px", width: "100%" }}
             >
               <div className="input-group">

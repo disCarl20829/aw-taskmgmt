@@ -136,8 +136,8 @@ const Cards = () => {
               top: "20px",
               right: "20px"
             }}
-            >
-              <i className="bi bi-x-lg" style={{ fontSize: "14px" }}></i>
+            >  <i className="bi bi-x-lg" style={{ fontSize: "14px" }}></i>
+            
             </button>
           </div>
         

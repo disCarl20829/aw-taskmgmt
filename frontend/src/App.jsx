@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Activity from "./pages/Activity";
 import Cards from "./pages/Cards";
+import CardBoards from "./pages/CardBoards";
 import SettingPage from "./pages/SettingPage";
 import BoardButton from "./pages/BoardButton";
 
@@ -32,6 +33,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/activity" element={<Activity />} />
         <Route path="/cards" element={<Cards />} />
+        <Route path="/cardBoards" element={<CardBoards/>}/>
         <Route path="/settingPage" element={<SettingPage />} />
         <Route path="/boardbutton" element={<BoardButton />} />
       </Routes>
