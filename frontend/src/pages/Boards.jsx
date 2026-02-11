@@ -10,17 +10,24 @@ import {
   Container,
   Overlay,
   Modal,
+  Dropdown,
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, } from "react-router-dom";
 
 const Boards = () => {
   const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedColor, setSelectedColor] = useState("#0079bf");
   const [showModal, setShowModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const target = useRef(null);
+  const [selectedVisibility, setSelectedVisibility] = useState({
+    title: "Workspace",
+    icon: "bi-people",
+    desc: "All members of the Animatewell Workspace can see and edit this board."
+  });
 
   const handleCloseModal = () => setShowModal(false);
   const handleShowModal = () => setShowModal(true);
@@ -201,6 +208,58 @@ const Boards = () => {
           background-color: #333c44 !important;
           transform: translateY(-2px);
         }
+
+        /* Custom Visibility Dropdown Styling */
+.visibility-dropdown .dropdown-toggle {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #22272b !important;
+  border: 1px solid #444c56 !important;
+  padding: 10px 12px;
+  color: #dee2e6 !important;
+}
+
+.visibility-dropdown .dropdown-menu {
+  background-color: #282e33;
+  border: 1px solid #454f59;
+  width: 100%;
+  min-width: 300px;
+  padding: 8px 0;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+.visibility-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #b6c2cf;
+  white-space: normal;
+}
+
+.visibility-item:hover {
+  background-color: #333c44 !important;
+  color: #fff !important;
+}
+
+.visibility-text .title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #deebff;
+  margin-bottom: 2px;
+}
+
+.visibility-text .desc {
+  display: block;
+  font-size: 0.8rem;
+  color: #9fadbc;
+  line-height: 1.4;
+}
+
       `}</style>
 
       <div className="app-container">
@@ -238,7 +297,15 @@ const Boards = () => {
                 <Form.Control type="search" placeholder="Search" className="bg-dark text-light border-secondary" />
               </div>
             </Form.Group>
-            <Button variant="primary" size="sm" className="fw-bold px-3">Create</Button>
+            
+            <Button
+              variant="primary"
+              size="sm"
+              className="fw-bold px-3 shadow-none border-0"
+              onClick={handleShowModal}
+            >
+              Create
+            </Button>
           </div>
 
           {/* RIGHT SECTION */}
@@ -367,38 +434,297 @@ const Boards = () => {
         </div>
       </div>
 
-      {/* Create Board Modal */}
-      <Modal show={showModal} onHide={handleCloseModal} centered contentClassName="create-board-modal">
-        <Modal.Header closeButton closeVariant="white" className="border-0">
-          <Modal.Title className="fs-6 w-100 text-center text-light">Create board</Modal.Title>
+      <Modal
+        show={showModal}
+        onHide={handleCloseModal}
+        centered
+        contentClassName="create-board-modal"
+      >
+        <Modal.Header closeButton closeVariant="white" className="border-0 pb-2">
+          <Modal.Title className="fs-6 w-100 text-center text-light">
+            Create board
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-0">
-          <div className="modal-preview-img mb-3">
-            <div className="preview-skeleton"></div>
+          {/* Enhanced Preview with Image Overlay */}
+          <div
+            className="position-relative mb-4 overflow-hidden"
+            style={{
+              backgroundColor: selectedColor,
+              minHeight: "120px",
+              borderRadius: "8px",
+              backgroundImage: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor}dd 100%)`,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              transition: "all 0.3s ease"
+            }}
+          >
+            <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                fill="rgba(255,255,255,0.3)"
+                viewBox="0 0 16 16"
+              >
+                <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5z" />
+              </svg>
+            </div>
           </div>
+
           <Form>
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-light">Background</Form.Label>
-              <div className="d-flex gap-2 flex-wrap">
-                {["#0079bf", "#d29034", "#519839", "#b04632", "#89609e"].map((color) => (
-                  <div key={color} className="color-swatch" style={{ backgroundColor: color }}></div>
+            <Form.Group className="mb-4">
+              <Form.Label className="small fw-bold text-light mb-2">
+                Background
+              </Form.Label>
+
+              {/* Premium Color Grid */}
+              <div className="d-flex gap-2 flex-wrap align-items-center mb-3">
+                {[
+                  { color: "#0079bf", name: "Ocean Blue" },
+                  { color: "#d29034", name: "Golden" },
+                  { color: "#519839", name: "Forest Green" },
+                  { color: "#b04632", name: "Ruby Red" },
+                  { color: "#89609e", name: "Royal Purple" },
+                  { color: "#cd5a91", name: "Pink Rose" },
+                  { color: "#00aacc", name: "Cyan" },
+                  { color: "#ff6b6b", name: "Coral" }
+                ].map(({ color, name }) => (
+                  <div
+                    key={color}
+                    className="position-relative"
+                    style={{ width: "48px" }}
+                  >
+                    <div
+                      className="color-swatch-enhanced"
+                      style={{
+                        backgroundColor: color,
+                        width: "48px",
+                        height: "36px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        border: selectedColor === color
+                          ? "3px solid white"
+                          : "2px solid rgba(255,255,255,0.1)",
+                        transform: selectedColor === color ? "scale(1.1)" : "scale(1)",
+                        transition: "all 0.2s ease",
+                        boxShadow: selectedColor === color
+                          ? "0 4px 12px rgba(0,0,0,0.4)"
+                          : "0 2px 4px rgba(0,0,0,0.2)"
+                      }}
+                      onClick={() => setSelectedColor(color)}
+                      onMouseEnter={(e) => {
+                        if (selectedColor !== color) {
+                          e.target.style.transform = "scale(1.05)";
+                          e.target.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedColor !== color) {
+                          e.target.style.transform = "scale(1)";
+                          e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+                        }
+                      }}
+                    >
+                      {selectedColor === color && (
+                        <div className="position-absolute top-50 start-50 translate-middle">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            fill="white"
+                            viewBox="0 0 16 16"
+                          >
+                            <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 ))}
+
+                {/* Enhanced Custom Color Picker */}
+                <div className="position-relative">
+                  <label
+                    htmlFor="customColor"
+                    className="d-flex flex-column align-items-center justify-content-center"
+                    style={{
+                      width: "48px",
+                      height: "36px",
+                      background: `linear-gradient(135deg, 
+                  #ff0000 0%, 
+                  #ffff00 17%, 
+                  #00ff00 33%, 
+                  #00ffff 50%, 
+                  #0000ff 67%, 
+                  #ff00ff 83%, 
+                  #ff0000 100%)`,
+                      border: "2px solid rgba(255,255,255,0.2)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      position: "relative",
+                      overflow: "hidden",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "scale(1.05)";
+                      e.currentTarget.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    <div
+                      className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
+                      style={{
+                        backgroundColor: "rgba(0,0,0,0.4)",
+                        backdropFilter: "blur(2px)"
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        fill="white"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                      </svg>
+                    </div>
+                  </label>
+                  <input
+                    type="color"
+                    id="customColor"
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    style={{
+                      position: "absolute",
+                      opacity: 0,
+                      width: "0",
+                      height: "0"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Current Color Display */}
+              <div
+                className="d-flex align-items-center gap-2 p-2 rounded"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <div
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    backgroundColor: selectedColor,
+                    borderRadius: "4px",
+                    border: "2px solid rgba(255,255,255,0.2)"
+                  }}
+                ></div>
+                <span className="text-light small">
+                  Selected: <span className="text-secondary">{selectedColor.toUpperCase()}</span>
+                </span>
               </div>
             </Form.Group>
+
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-light">Board title *</Form.Label>
-              <Form.Control type="text" className="bg-dark text-light border-secondary" />
-              <Form.Text className="text-muted small">Board title is required</Form.Text>
+              <Form.Label className="small fw-bold text-light">
+                Board title *
+              </Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter board title..."
+                className="bg-dark text-light border-secondary"
+                style={{
+                  fontSize: "14px",
+                  padding: "10px 12px"
+                }}
+              />
+              <Form.Text className="text-muted small">
+                👆 Board title is required
+              </Form.Text>
             </Form.Group>
+
             <Form.Group className="mb-4">
               <Form.Label className="small fw-bold text-light">Visibility</Form.Label>
-              <Form.Select className="bg-dark text-light border-secondary">
-                <option>Workspace</option>
-                <option>Private</option>
-                <option>Public</option>
-              </Form.Select>
+              <Dropdown className="visibility-dropdown">
+                <Dropdown.Toggle variant="dark" id="dropdown-visibility">
+                  <span>
+                    <i className={`bi ${selectedVisibility.icon} me-2`}></i>
+                    {selectedVisibility.title}
+                  </span>
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu>
+                  {/* Private Option */}
+                  <Dropdown.Item
+                    as="div"
+                    className="visibility-item"
+                    onClick={() => setSelectedVisibility({
+                      title: "Private",
+                      icon: "bi-lock",
+                      desc: "Board members and Animatewell Workspace admin can see and edit this board."
+                    })}
+                  >
+                    <i className="bi bi-lock fs-5 mt-1"></i>
+                    <div className="visibility-text">
+                      <span className="title">Private</span>
+                      <span className="desc">Board members and Animatewell Workspace admin can see and edit this board.</span>
+                    </div>
+                  </Dropdown.Item>
+
+                  {/* Workspace Option */}
+                  <Dropdown.Item
+                    as="div"
+                    className="visibility-item"
+                    onClick={() => setSelectedVisibility({
+                      title: "Workspace",
+                      icon: "bi-people",
+                      desc: "All members of the Animatewell Workspace can see and edit this board."
+                    })}
+                  >
+                    <i className="bi bi-people fs-5 mt-1"></i>
+                    <div className="visibility-text">
+                      <span className="title">Workspace</span>
+                      <span className="desc">All members of the Animatewell Workspace can see and edit this board.</span>
+                    </div>
+                  </Dropdown.Item>
+
+                  {/* Public Option */}
+                  <Dropdown.Item
+                    as="div"
+                    className="visibility-item"
+                    onClick={() => setSelectedVisibility({
+                      title: "Public",
+                      icon: "bi-globe",
+                      desc: "Anyone on the internet can see this board. Only board members can edit."
+                    })}
+                  >
+                    <i className="bi bi-globe fs-5 mt-1"></i>
+                    <div className="visibility-text">
+                      <span className="title">Public</span>
+                      <span className="desc">Anyone on the internet can see this board. Only board members can edit.</span>
+                    </div>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
             </Form.Group>
-            <Button variant="primary" className="w-100 fw-bold py-2" disabled>Create</Button>
+
+            <Button
+              variant="primary"
+              className="w-100 fw-bold py-2"
+              style={{
+                fontSize: "14px",
+                borderRadius: "6px",
+                transition: "all 0.2s ease"
+              }}
+              disabled
+            >
+              Create Board
+            </Button>
           </Form>
         </Modal.Body>
       </Modal>

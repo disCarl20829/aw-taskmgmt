@@ -8,16 +8,10 @@ const Cards = () => {
   const [currentSort, setCurrentSort] = useState("Sort by due date");
 
   const [filters, setFilters] = useState({
-    markedComplete: false,
-    notMarkedComplete: false,
-    noDates: false,
-    overdue: false,
-    nextSevenDays: false,
-    nextMonth: false,
-    activeDay: false,
-    activeWeek: false,
-    activeMonth: false,
-    activeLast: false,
+    cardStatus: null,
+    dueDate: null,
+    activity: null,
+    board: null,
   });
 
   const dropdownRef = useRef(null);
@@ -41,11 +35,14 @@ const Cards = () => {
     setShowSortOverlay(false);
   };
 
-  const handleCheck = (name) => {
-    setFilters((prev) => ({ ...prev, [name]: !prev[name] }));
+  const handleCheck = (category, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [category]: prev[category] === value ? null : value
+    }));
   };
 
- return (
+  return (
     <>
       <style>{`
         .bg-dark-main { background-color: #1d2125; }
@@ -124,23 +121,23 @@ const Cards = () => {
 
           <div className="mb-4">
             <h5 className="fw-bold" style={{ fontSize: "1.1rem" }}>Cards</h5>
-              <button
-               className="btn d-flex align-items-center justify-content-center rounded-circle position-absolute"
-            style={{
-              width: "32px",
-              height: "32px",
-              backgroundColor: "#282e33",
-              border: "none",
-              color: "#9fadbc",
-              padding: 0,
-              top: "20px",
-              right: "20px"
-            }}
+            <button
+              className="btn d-flex align-items-center justify-content-center rounded-circle position-absolute"
+              style={{
+                width: "32px",
+                height: "32px",
+                backgroundColor: "#282e33",
+                border: "none",
+                color: "#9fadbc",
+                padding: 0,
+                top: "20px",
+                right: "20px"
+              }}
             >
               <i className="bi bi-x-lg" style={{ fontSize: "14px" }}></i>
             </button>
           </div>
-        
+
           <div className="d-flex justify-content-end gap-2 mb-4 position-relative">
 
             {/* Sort Dropdown */}
@@ -243,42 +240,103 @@ const Cards = () => {
                     <span style={{ fontSize: "0.7rem", color: "#9fadbc" }}>Filter by card name keyword.</span>
                   </div>
 
+                  {/* Card Status Section */}
                   <div className="mb-3">
                     <label className="fw-bold d-block mb-2" style={{ fontSize: "0.7rem", color: "#9fadbc" }}>Card status</label>
-                    {["markedComplete", "notMarkedComplete"].map((item, i) => (
-                      <div className="form-check" key={item}>
-                        <input
-                          className="form-check-input bg-transparent border-secondary"
-                          type="checkbox"
-                          checked={filters[item]}
-                          onChange={() => handleCheck(item)}
-                          id={`c${i}`}
-                        />
-                        <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor={`c${i}`}>
-                          {item === "markedComplete" ? "Marked as complete" : "Not marked as complete"}
-                        </label>
-                      </div>
-                    ))}
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.cardStatus === "markedComplete"}
+                        onChange={() => handleCheck("cardStatus", "markedComplete")}
+                        id="c0"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="c0">
+                        Marked as complete
+                      </label>
+                    </div>
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.cardStatus === "notMarkedComplete"}
+                        onChange={() => handleCheck("cardStatus", "notMarkedComplete")}
+                        id="c1"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="c1">
+                        Not marked as complete
+                      </label>
+                    </div>
                   </div>
 
+                  {/* Due Date Section */}
                   <div className="mb-3">
                     <label className="fw-bold d-block mb-2" style={{ fontSize: "0.7rem", color: "#9fadbc" }}>Due date</label>
-                    {["noDates", "overdue", "nextSevenDays", "nextMonth"].map((item, i) => (
-                      <div className="form-check" key={item}>
-                        <input
-                          className="form-check-input bg-transparent border-secondary"
-                          type="checkbox"
-                          checked={filters[item]}
-                          onChange={() => handleCheck(item)}
-                          id={`d${i}`}
-                        />
-                        <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor={`d${i}`}>
-                          {item.replace(/([A-Z])/g, " $1")}
-                        </label>
-                      </div>
-                    ))}
+
+                    {/* No dates */}
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.dueDate === "noDates"}
+                        onChange={() => handleCheck("dueDate", "noDates")}
+                        id="d0"
+                      />
+                      <label className="form-check-label d-flex align-items-center gap-2" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="d0">
+                        <i className="bi bi-dash-circle" style={{ fontSize: "14px" }}></i>
+                        No dates
+                      </label>
+                    </div>
+
+                    {/* Overdue */}
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.dueDate === "overdue"}
+                        onChange={() => handleCheck("dueDate", "overdue")}
+                        id="d1"
+                      />
+                      <label className="form-check-label d-flex align-items-center gap-2" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="d1">
+                        <i className="bi bi-exclamation-triangle" style={{ fontSize: "14px", color: "#f87168" }}></i>
+                        Overdue
+                      </label>
+                    </div>
+
+                    {/* Next seven days */}
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.dueDate === "nextSevenDays"}
+                        onChange={() => handleCheck("dueDate", "nextSevenDays")}
+                        id="d2"
+                      />
+                      <label className="form-check-label d-flex align-items-center gap-2" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="d2">
+                        <i className="bi bi-calendar-week" style={{ fontSize: "14px" }}></i>
+                        Next seven days
+                      </label>
+                    </div>
+
+                    {/* Next month */}
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.dueDate === "nextMonth"}
+                        onChange={() => handleCheck("dueDate", "nextMonth")}
+                        id="d3"
+                      />
+                      <label className="form-check-label d-flex align-items-center gap-2" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="d3">
+                        <i className="bi bi-calendar-month" style={{ fontSize: "14px" }}></i>
+                        Next month
+                      </label>
+                    </div>
                   </div>
 
+                  {/* Board Section */}
                   <div className="mb-3">
                     <label className="fw-bold d-block mb-1" style={{ fontSize: "0.7rem", color: "#9fadbc" }}>Board</label>
                     <select
@@ -289,22 +347,61 @@ const Cards = () => {
                     </select>
                   </div>
 
+                  {/* Activity Section */}
                   <div>
                     <label className="fw-bold d-block mb-2" style={{ fontSize: "0.7rem", color: "#9fadbc" }}>Activity</label>
-                    {["activeDay", "activeWeek", "activeMonth", "activeLast"].map((item, i) => (
-                      <div className="form-check" key={item}>
-                        <input
-                          className="form-check-input bg-transparent border-secondary"
-                          type="checkbox"
-                          checked={filters[item]}
-                          onChange={() => handleCheck(item)}
-                          id={`a${i}`}
-                        />
-                        <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor={`a${i}`}>
-                          Active in the {item.replace("active", "").toLowerCase()}
-                        </label>
-                      </div>
-                    ))}
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.activity === "activeDay"}
+                        onChange={() => handleCheck("activity", "activeDay")}
+                        id="a0"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="a0">
+                        Active in the day
+                      </label>
+                    </div>
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.activity === "activeWeek"}
+                        onChange={() => handleCheck("activity", "activeWeek")}
+                        id="a1"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="a1">
+                        Active in the week
+                      </label>
+                    </div>
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.activity === "activeMonth"}
+                        onChange={() => handleCheck("activity", "activeMonth")}
+                        id="a2"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="a2">
+                        Active in the month
+                      </label>
+                    </div>
+
+                    <div className="form-check">
+                      <input
+                        className="form-check-input bg-transparent border-secondary"
+                        type="checkbox"
+                        checked={filters.activity === "activeLast"}
+                        onChange={() => handleCheck("activity", "activeLast")}
+                        id="a3"
+                      />
+                      <label className="form-check-label" style={{ fontSize: "0.85rem", color: "#9fadbc" }} htmlFor="a3">
+                        Active in the last
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
