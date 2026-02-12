@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import BoardCards from "../components/auth/BoardCards";
 
 const CardBoards = () => {
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [activeMenu, setActiveMenu] = useState(null); // 'profile' or 'auto' (visibility)
+  const [activeMenu, setActiveMenu] = useState(null);
   const [activeShareTab, setActiveShareTab] = useState("members");
   const [visibility, setVisibility] = useState("workspace");
   const [isConfirmingPublic, setIsConfirmingPublic] = useState(false);
@@ -13,6 +13,10 @@ const CardBoards = () => {
   const [shareRole, setShareRole] = useState("Member");
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showCopyToast, setShowCopyToast] = useState(false);
+
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const colors = {
     topNav: "#1d4e89",
     bg: "#5a8fb8",
@@ -22,10 +26,135 @@ const CardBoards = () => {
     listBlue: "#5a7c8f",
     listGrey: "#b8c5d0",
     cardBg: "#2e3c4d",
+    accentGreen: "#10b981",
+    dangerRed: "#fee2e2",
+    textRed: "#991b1b",
   };
+
+  // 1. FETCH DATA FROM DATABASE ON LOAD
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/kanban"); // Replace with your URL
+        const result = await response.json();
+        setData(result);
+      } catch (err) {
+        console.error("Error loading board:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // 2. DELETE CARD
+  const deleteCard = async (listIdx, cardId) => {
+    try {
+      await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
+      const newData = [...data];
+      newData[listIdx].cards = newData[listIdx].cards.filter(
+        (c) => c.id !== cardId,
+      );
+      setData(newData);
+    } catch (err) {
+      alert("Failed to delete card");
+    }
+  };
+
+  // 3. DELETE LIST
+  const deleteList = async (listId) => {
+    if (!window.confirm("Delete this entire list?")) return;
+    try {
+      await fetch(`/api/lists/${listId}`, { method: "DELETE" });
+      setData(data.filter((list) => list.id !== listId));
+    } catch (err) {
+      alert("Failed to delete list");
+    }
+  };
+
+  if (loading)
+    return <div className="p-5 text-center text-white">Loading Board...</div>;
 
   return (
     <>
+      <style>{`
+        .board-wrapper {
+          background-color: ${colors.bg};
+          min-height: 100vh;
+          color: white;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .custom-navbar { background-color: ${colors.topNav}; }
+        .custom-board-header { background-color: ${colors.boardHeader}; }
+        /* Rest of your styles from the document remain here... */
+      `}</style>
+
+      <div className="board-wrapper">
+        <div className="custom-navbar d-flex justify-content-between align-items-center px-3 py-2"></div>
+
+        <div className="custom-board-header d-flex justify-content-between align-items-center px-3 py-2"></div>
+
+        <div
+          className="kanban-scroll-container d-flex gap-3 p-3"
+          style={{ overflowX: "auto" }}
+        >
+          {data.map((list, listIdx) => (
+            <div
+              key={list.id}
+              className="kanban-list p-2 rounded shadow-sm"
+              style={{
+                backgroundColor: list.color || colors.listGrey,
+                minWidth: "280px",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-2 px-1 text-dark">
+                <input
+                  className="fw-bold small border-0 bg-transparent w-75"
+                  value={list.title}
+                  readOnly
+                />
+                <button
+                  onClick={() => deleteList(list.id)}
+                  className="btn btn-sm border-0 text-secondary"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {list.cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="bg-white rounded p-2 mb-2 shadow-sm d-flex justify-content-between align-items-center"
+                >
+                  <div className="d-flex align-items-center gap-2">
+                    <input type="checkbox" checked={card.completed} readOnly />
+                    <span className="small text-dark">{card.text}</span>
+                  </div>
+                  <button
+                    onClick={() => deleteCard(listIdx, card.id)}
+                    className="btn btn-sm p-0 border-0 text-danger opacity-50"
+                  >
+                    &minus;
+                  </button>
+                </div>
+              ))}
+
+              <button className="btn btn-sm w-100 text-start p-1 border-0 text-secondary">
+                + Add card
+              </button>
+            </div>
+          ))}
+
+          <button
+            onClick={() => {}}
+            className="kanban-list p-3 rounded border-0 text-center shadow-sm"
+            style={{ backgroundColor: colors.listGrey, minWidth: "280px" }}
+          >
+            <span className="fw-bold small text-dark">+ Add list</span>
+          </button>
+        </div>
+      </div>
+
       <style>{`
         .board-wrapper {
           background-color: ${colors.bg};
