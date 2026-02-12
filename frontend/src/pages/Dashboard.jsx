@@ -25,7 +25,7 @@ const Dashboard = () => {
   const [visibility, setVisibility] = useState({
     title: "Workspace",
     icon: "bi-people",
-    desc: "All members of the Animatewell Workspace can see and edit this board."
+    desc: "All members of the Animatewell Workspace can see and edit this board.",
   });
   const [showModal, setShowModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
@@ -83,16 +83,16 @@ const Dashboard = () => {
           >
             Profile and visibility
           </ListGroup.Item>
-          <ListGroup.Item 
-            action 
+          <ListGroup.Item
+            action
             as={Link}
             to="/activity"
             className="bg-dark text-light border-secondary"
           >
             Activity
           </ListGroup.Item>
-          <ListGroup.Item 
-            action 
+          <ListGroup.Item
+            action
             as={Link}
             to="/cards"
             className="bg-dark text-light border-secondary"
@@ -156,18 +156,6 @@ const Dashboard = () => {
     alignItems: "center",
     justifyContent: "center",
     fontSize: "0.85rem",
-  };
-
-  // Workspace action button styles
-  const workspaceButtonStyle = {
-    backgroundColor: "#282e33",
-    border: "1px solid #3d444d",
-    color: "#9fadbc",
-    fontSize: "0.8rem",
-    padding: "6px 14px",
-    borderRadius: "4px",
-    fontWeight: "500",
-    transition: "all 0.2s",
   };
 
   return (
@@ -340,22 +328,13 @@ const Dashboard = () => {
   line-height: 1.4;
 }
 
-/* Modal styling */
-.create-board-modal {
-  background-color: #282e33 !important;
-  border: 1px solid #454f59;
-}
+        .color-swatch-enhanced {
+          transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-.create-board-modal .modal-header {
-  background-color: #282e33;
-  border-bottom: 1px solid #454f59;
-}
-
-.create-board-modal .modal-body {
-  background-color: #282e33;
-  max-height: 70vh;
-  overflow-y: auto;
-}
+        .color-swatch-enhanced:hover {
+          transform: scale(1.05);
+        }
 
       `}</style>
 
@@ -396,7 +375,8 @@ const Dashboard = () => {
 
           {/* CENTER SECTION: Search + Create Button */}
           <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
-            <Form.Group className="mb-0 custom-search"
+            <Form.Group
+              className="mb-0 custom-search"
               style={{ maxWidth: "865px", width: "100%" }}
             >
               <div className="input-group">
@@ -472,10 +452,16 @@ const Dashboard = () => {
           <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
             <section className="mb-4">
               <div className="d-flex flex-column gap-1 mt-3">
-                <Link to="/boards" className="sidebar-btn-link text-start active text-decoration-none">
+                <Link
+                  to="/boards"
+                  className="sidebar-btn-link text-start active text-decoration-none"
+                >
                   <i className="bi bi-columns-gap me-2"></i>Boards
                 </Link>
-                <Link to="/home" className="sidebar-btn-link text-start text-decoration-none">
+                <Link
+                  to="/home"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-activity me-2"></i>Home
                 </Link>
               </div>
@@ -483,35 +469,53 @@ const Dashboard = () => {
 
             <section>
               <h6 className="sidebar-heading px-2">Workspaces</h6>
-              <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+              <div className="d-flex align-items-center mt-3 mb-2 w-100 text-start px-2">
                 <span className="workspace-icon me-2">A</span>
-                <span className="fw-bold">Animate Workspace</span>
-              </button>
+                <span className="fw-bold" style={{ color: "#9fadbc" }}>
+                  Animate Workspace
+                </span>
+              </div>
               <div className="d-flex flex-column gap-1 ps-4">
-                <Link to="/boards" className="sidebar-btn-link text-start text-decoration-none">
+                <Link
+                  to="/boards"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-kanban me-2"></i> Boards
                 </Link>
-                <Link to="/members" className="sidebar-btn-link text-start text-decoration-none">
+                <Link
+                  to="/members"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-people me-2"></i> Members
                 </Link>
-                <Link to="/settings" className="sidebar-btn-link text-start text-decoration-none">
+                <Link
+                  to="/settings"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-gear me-2"></i> Settings
                 </Link>
               </div>
             </section>
           </nav>
 
-          <Container fluid className="content-area p-4" style={{ maxWidth: "1200px" }}>
+          <Container
+            fluid
+            className="content-area p-4"
+            style={{ maxWidth: "1200px" }}
+          >
             {/* Recently Viewed Section */}
             <section className="mb-4">
-              <div className="section-heading"style={{ fontSize: "1rem" }}>
+              <div className="section-heading" style={{ fontSize: "1rem" }}>
                 <i className="bi bi-clock-history"></i>
                 <span>Recently viewed</span>
               </div>
 
               <Row className="g-2">
                 <Col xs="auto">
-                  <div style={boardTileGradientStyle} className="board-tile-hover">
+                  <div
+                    style={boardTileGradientStyle}
+                    className="board-tile-hover"
+                  >
                     <div style={boardTitleOverlayStyle}>My board</div>
                   </div>
                 </Col>
@@ -522,20 +526,41 @@ const Dashboard = () => {
             <section>
               <div className="d-flex align-items-center mb-3">
                 <div className="workspace-icon-lg me-3">A</div>
-                <h5 className="mb-0 text-light fw-bold" style={{ fontSize: "1.1rem" }}>
+                <h5
+                  className="mb-0 text-light fw-bold"
+                  style={{ fontSize: "1.1rem" }}
+                >
                   Animate Workspace
                 </h5>
                 <div className="ms-auto d-flex gap-2">
-                  <button className="workspace-action-btn" onClick={() => navigate('/boardbutton')}>
-                    <i className="bi bi-kanban me-1" style={{ fontSize: "0.75rem" }}></i>
+                  <button
+                    className="workspace-action-btn"
+                    onClick={() => navigate("/boardbutton")}
+                  >
+                    <i
+                      className="bi bi-kanban me-1"
+                      style={{ fontSize: "0.75rem" }}
+                    ></i>
                     Boards
                   </button>
-                  <button className="workspace-action-btn" onClick={() => navigate('/members')}>
-                    <i className="bi bi-people me-1" style={{ fontSize: "0.75rem" }}></i>
+                  <button
+                    className="workspace-action-btn"
+                    onClick={() => navigate("/members")}
+                  >
+                    <i
+                      className="bi bi-people me-1"
+                      style={{ fontSize: "0.75rem" }}
+                    ></i>
                     Members
                   </button>
-                  <button className="workspace-action-btn" onClick={() => navigate('/settings')}>
-                    <i className="bi bi-gear me-1" style={{ fontSize: "0.75rem" }}></i>
+                  <button
+                    className="workspace-action-btn"
+                    onClick={() => navigate("/settings")}
+                  >
+                    <i
+                      className="bi bi-gear me-1"
+                      style={{ fontSize: "0.75rem" }}
+                    ></i>
                     Settings
                   </button>
                 </div>
@@ -543,7 +568,10 @@ const Dashboard = () => {
 
               <Row className="g-2">
                 <Col xs="auto">
-                  <div style={boardTileGradientStyle} className="board-tile-hover">
+                  <div
+                    style={boardTileGradientStyle}
+                    className="board-tile-hover"
+                  >
                     <div style={boardTitleOverlayStyle}>My board</div>
                   </div>
                 </Col>
@@ -579,14 +607,17 @@ const Dashboard = () => {
         onHide={handleCloseModal}
         centered
         contentClassName="create-board-modal"
-        size="lg"
       >
-        <Modal.Header closeButton closeVariant="white" className="border-0 pb-2">
+        <Modal.Header
+          closeButton
+          closeVariant="white"
+          className="border-0 pb-2"
+        >
           <Modal.Title className="fs-6 w-100 text-center text-light">
             Create board
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-0 px-4">
+        <Modal.Body className="pt-0">
           {/* Enhanced Preview with Image Overlay */}
           <div
             className="position-relative mb-4 overflow-hidden"
@@ -596,7 +627,7 @@ const Dashboard = () => {
               borderRadius: "8px",
               backgroundImage: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor}dd 100%)`,
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
             }}
           >
             <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center">
@@ -628,7 +659,7 @@ const Dashboard = () => {
                   { color: "#89609e", name: "Royal Purple" },
                   { color: "#cd5a91", name: "Pink Rose" },
                   { color: "#00aacc", name: "Cyan" },
-                  { color: "#ff6b6b", name: "Coral" }
+                  { color: "#ff6b6b", name: "Coral" },
                 ].map(({ color, name }) => (
                   <div
                     key={color}
@@ -643,26 +674,31 @@ const Dashboard = () => {
                         height: "36px",
                         borderRadius: "6px",
                         cursor: "pointer",
-                        border: selectedColor === color
-                          ? "3px solid white"
-                          : "2px solid rgba(255,255,255,0.1)",
-                        transform: selectedColor === color ? "scale(1.1)" : "scale(1)",
+                        border:
+                          selectedColor === color
+                            ? "3px solid white"
+                            : "2px solid rgba(255,255,255,0.1)",
+                        transform:
+                          selectedColor === color ? "scale(1.1)" : "scale(1)",
                         transition: "all 0.2s ease",
-                        boxShadow: selectedColor === color
-                          ? "0 4px 12px rgba(0,0,0,0.4)"
-                          : "0 2px 4px rgba(0,0,0,0.2)"
+                        boxShadow:
+                          selectedColor === color
+                            ? "0 4px 12px rgba(0,0,0,0.4)"
+                            : "0 2px 4px rgba(0,0,0,0.2)",
                       }}
                       onClick={() => setSelectedColor(color)}
                       onMouseEnter={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1.05)";
-                          e.target.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                          e.target.style.boxShadow =
+                            "0 3px 8px rgba(0,0,0,0.3)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1)";
-                          e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+                          e.target.style.boxShadow =
+                            "0 2px 4px rgba(0,0,0,0.2)";
                         }
                       }}
                     >
@@ -704,11 +740,12 @@ const Dashboard = () => {
                       cursor: "pointer",
                       position: "relative",
                       overflow: "hidden",
-                      transition: "all 0.2s ease"
+                      transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                      e.currentTarget.style.boxShadow =
+                        "0 3px 8px rgba(0,0,0,0.3)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scale(1)";
@@ -719,7 +756,7 @@ const Dashboard = () => {
                       className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
                       style={{
                         backgroundColor: "rgba(0,0,0,0.4)",
-                        backdropFilter: "blur(2px)"
+                        backdropFilter: "blur(2px)",
                       }}
                     >
                       <svg
@@ -742,7 +779,7 @@ const Dashboard = () => {
                       position: "absolute",
                       opacity: 0,
                       width: "0",
-                      height: "0"
+                      height: "0",
                     }}
                   />
                 </div>
@@ -753,7 +790,7 @@ const Dashboard = () => {
                 className="d-flex align-items-center gap-2 p-2 rounded"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)"
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 <div
@@ -762,11 +799,14 @@ const Dashboard = () => {
                     height: "24px",
                     backgroundColor: selectedColor,
                     borderRadius: "4px",
-                    border: "2px solid rgba(255,255,255,0.2)"
+                    border: "2px solid rgba(255,255,255,0.2)",
                   }}
                 ></div>
                 <span className="text-light small">
-                  Selected: <span className="text-secondary">{selectedColor.toUpperCase()}</span>
+                  Selected:{" "}
+                  <span className="text-secondary">
+                    {selectedColor.toUpperCase()}
+                  </span>
                 </span>
               </div>
             </Form.Group>
@@ -781,7 +821,7 @@ const Dashboard = () => {
                 className="bg-dark text-light border-secondary"
                 style={{
                   fontSize: "14px",
-                  padding: "10px 12px"
+                  padding: "10px 12px",
                 }}
               />
               <Form.Text className="text-muted small">
@@ -790,7 +830,9 @@ const Dashboard = () => {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-light">Visibility</Form.Label>
+              <Form.Label className="small fw-bold text-light">
+                Visibility
+              </Form.Label>
               <Dropdown className="visibility-dropdown">
                 <Dropdown.Toggle variant="dark" id="dropdown-visibility">
                   <span>
@@ -804,16 +846,21 @@ const Dashboard = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Private",
-                      icon: "bi-lock",
-                      desc: "Board members and Animatewell Workspace admin can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Private",
+                        icon: "bi-lock",
+                        desc: "Board members and Animatewell Workspace admin can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-lock fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Private</span>
-                      <span className="desc">Board members and Animatewell Workspace admin can see and edit this board.</span>
+                      <span className="desc">
+                        Board members and Animatewell Workspace admin can see
+                        and edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -821,16 +868,21 @@ const Dashboard = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Workspace",
-                      icon: "bi-people",
-                      desc: "All members of the Animatewell Workspace can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Workspace",
+                        icon: "bi-people",
+                        desc: "All members of the Animatewell Workspace can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-people fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Workspace</span>
-                      <span className="desc">All members of the Animatewell Workspace can see and edit this board.</span>
+                      <span className="desc">
+                        All members of the Animatewell Workspace can see and
+                        edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -838,16 +890,21 @@ const Dashboard = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Public",
-                      icon: "bi-globe",
-                      desc: "Anyone on the internet can see this board. Only board members can edit."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Public",
+                        icon: "bi-globe",
+                        desc: "Anyone on the internet can see this board. Only board members can edit.",
+                      })
+                    }
                   >
                     <i className="bi bi-globe fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Public</span>
-                      <span className="desc">Anyone on the internet can see this board. Only board members can edit.</span>
+                      <span className="desc">
+                        Anyone on the internet can see this board. Only board
+                        members can edit.
+                      </span>
                     </div>
                   </Dropdown.Item>
                 </Dropdown.Menu>
@@ -860,7 +917,7 @@ const Dashboard = () => {
               style={{
                 fontSize: "14px",
                 borderRadius: "6px",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
               }}
               disabled
             >
@@ -870,6 +927,7 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
+      {/* Closed Boards Modal */}
       <Modal
         show={showClosedModal}
         onHide={handleCloseClosedModal}
@@ -913,6 +971,7 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
+      {/* Apps Overlay */}
       <Overlay
         target={target.current}
         show={showOverlay}
@@ -924,29 +983,24 @@ const Dashboard = () => {
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
               <Button
-                variant="primary"
-                className="text-start d-flex align-items-center gap-2"
+                variant="dark"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
                 onClick={() => navigate('/home')}
               >
-                <i className="bi bi-house-door-fill"></i>
-                Home
+                <i className="bi bi-house-door-fill"></i> Home
               </Button>
-
               <Button
                 variant="dark"
-                className="text-start d-flex align-items-center gap-2"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
               >
-                <i className="bi bi-person-badge-fill"></i>
-                Admin Panel
+                <i className="bi bi-person-badge-fill"></i> Admin Panel
               </Button>
-
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
                 onClick={() => navigate('/boards')}
               >
-                <i className="bi bi-columns-gap"></i>
-                Boards
+                <i className="bi bi-columns-gap"></i> Boards
               </Button>
             </div>
           </div>
