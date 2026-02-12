@@ -22,13 +22,40 @@
     "muller": "^1.1.0",
     "multer": "^2.0.2",
     "mysql2": "^3.16.0",
-    "nodemailer": "^8.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "react-bootstrap": "^2.10.10",
     "react-bootstrap-icons": "^1.11.6",
-    "react-router-dom": "^7.13.0",
-    "socket.io": "^4.8.3"
+    "react-router-dom": "^7.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
+{
+  "name": "taskmangement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "muller": "^1.1.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.16.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
