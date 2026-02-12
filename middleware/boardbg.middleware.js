@@ -10,25 +10,25 @@ function ensureDir(dirPath) {
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const card_id = req.body.card_id || req.params.card_id;
-        const uploadPath = path.join(__dirname, '../public/uploads/attachment', `attachment-${card_id}`);
+        const uploadPath = path.join(__dirname, '../backgrounds');
 
         ensureDir(uploadPath);
         cb(null, uploadPath);
     },
+
     filename: function (req, file, cb) {
-        const card_id = req.body.card_id || req.params.card_id;
-        if (!card_id) return cb(new Error("card_id not Found or Required!"));
+        const board_id = req.body.board_id || req.params.board_id;
+        if (!board_id) return cb(new Error("board_id not Found or Required!"));
 
         const timestapp = Date.now();
-        const fileName = `attachment-${card_id}-${timestapp}${path.extname(file.originalname)}`;
+        const fileName = `background-board-${board_id}-${timestapp}${path.extname(file.originalname)}`;
 
         cb(null, fileName);
     }
 })
 
 const fileFilter = (req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png|pdf|docx)$/;;
+    const allowed = /\.(jpg|jpeg|png)$/;;
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (allowed.test(ext)) cb(null, true);

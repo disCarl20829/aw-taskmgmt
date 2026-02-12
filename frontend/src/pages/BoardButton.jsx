@@ -4,10 +4,8 @@ const BoardButton = () => {
   const [showCollections, setShowCollections] = useState(false);
   const collectionsRef = useRef(null);
 
-  // Close overlay when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If the overlay is open and the click is NOT inside the overlay, close it
       if (
         collectionsRef.current &&
         !collectionsRef.current.contains(event.target)
@@ -21,6 +19,7 @@ const BoardButton = () => {
     }
 
     return () => {
+      z;
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCollections]);

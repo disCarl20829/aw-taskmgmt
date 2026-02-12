@@ -1,87 +1,139 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../config/api";
 
-import AuthLayout from '../components/auth/AuthLayout';
-import InputField from '../components/auth/inputField';
-import GoogleButton from '../components/auth/GoogleBtn';
+import AuthLayout from "../components/auth/AuthLayout";
+import InputField from "../components/auth/inputField";
+import GoogleButton from "../components/auth/GoogleBtn";
 
-import '../css/style.css'
-import '../css/sign.css';
+import "../css/style.css";
+import "../css/sign.css";
 
 function SignUp() {
-    const navigate = useNavigate();
-    const [formData, setFormData] = React.useState({
-        user_name: '',
-        user_email: '',
-        user_password: '',
-        confirm_password: ''
-    });
+  const navigate = useNavigate();
+  const [formData, setFormData] = React.useState({
+    user_name: "",
+    user_email: "",
+    user_password: "",
+    confirm_password: "",
+  });
 
-    const handleChange = (id, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [id]: value
-        }));
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        await api.get("/auth/check");
+      } catch (err) {
+        if (err.response?.status === 400) {
+          navigate("/dashboard", { replace: true });
+        }
+      }
     };
 
-    const handleSignUp = async (e) => {
-        e.preventDefault();
+    checkSession();
+  }, [navigate]);
 
-        if (formData.user_password !== formData.confirm_password) {
-            alert('Passwords do not match!');
-            return;
-        }
+  const handleChange = (id, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
-        try {
-            const res = await fetch('http://localhost:3000/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ user_name: formData.user_name, user_email: formData.user_email, user_password: formData.user_password }),
-            });
+  const handleSignUp = async (e) => {
+    e.preventDefault();
 
-            if (res.ok) {
-                if (data.needsPassword) {
-                    navigate('/set-password');
-                } else {
-                    navigate('/dashboard');
-                }
-            } else {
-                console.error('Sign-up failed:', data.message);
-            }
-
-            alert(data.message);
-        } catch (err) {
-            console.error('Error during sign up:', err);
-            alert('Error during sign up. Please try again.');
-        }
-    };
-
-    const handleGoogleLogin = () => {
-        window.location.href = 'http://localhost:3000/auth/google';
+    if (formData.user_password !== formData.confirm_password) {
+      alert("Passwords do not match!");
+      return;
     }
 
-    return (
-        <AuthLayout title="Sign Up">
-            <form onSubmit={handleSignUp}>
-                <InputField icon="person" type="text" placeholder="Username" id="user_name" value={formData.user_name} onChange={(e) => handleChange('user_name', e.target.value)} />
-                <InputField icon="envelope" type="email" placeholder="Email" id="user_email" value={formData.user_email} onChange={(e) => handleChange('user_email', e.target.value)} />
-                <InputField icon="lock" type="password" placeholder="Password" id="user_password" isPassword={true} value={formData.user_password} onChange={(e) => handleChange('user_password', e.target.value)} />
-                <InputField icon="lock-fill" type="password" placeholder="Confirm Password" id="confirm_password" isPassword={true} value={formData.confirm_password} onChange={(e) => handleChange('confirm_password', e.target.value)} />
-                <button type="submit" className="btn btn-signup">Sign In</button>
-            </form>
+    try {
+      const res = await api.post("/auth/register", {
+        user_name: formData.user_name,
+        user_email: formData.user_email,
+        user_password: formData.user_password,
+      });
+      const data = res.data;
 
-            <div className="divider"><span>or</span></div>
+      alert(data.message);
+      if (data.needsPassword) {
+        navigate("/set-password");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 400) {
+          alert("You are already logged in. Redirecting to dashboard...");
+          navigate("/dashboard", { replace: true });
+        } else {
+          console.error("Sign-up Failed:", err.response.data.message);
+          alert(err.response.data.message);
+        }
+      } else {
+        console.error("Error during sign up:", err.message);
+        alert("Error during sign up. Please try again.");
+      }
+    }
+  };
 
-            <GoogleButton onClick={handleGoogleLogin} />
+  const handleGoogleLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+  };
 
-            <div className="signup-text">
-                Already have an Account? <a href="/">Sign in</a>
-            </div>
-        </AuthLayout>
-    );
+  return (
+    <AuthLayout title="Sign Up">
+      <form onSubmit={handleSignUp}>
+        <InputField
+          icon="person"
+          type="text"
+          placeholder="Username"
+          id="user_name"
+          value={formData.user_name}
+          onChange={(e) => handleChange("user_name", e.target.value)}
+        />
+        <InputField
+          icon="envelope"
+          type="email"
+          placeholder="Email"
+          id="user_email"
+          value={formData.user_email}
+          onChange={(e) => handleChange("user_email", e.target.value)}
+        />
+        <InputField
+          icon="lock"
+          type="password"
+          placeholder="Password"
+          id="user_password"
+          isPassword={true}
+          value={formData.user_password}
+          onChange={(e) => handleChange("user_password", e.target.value)}
+        />
+        <InputField
+          icon="lock-fill"
+          type="password"
+          placeholder="Confirm Password"
+          id="confirm_password"
+          isPassword={true}
+          value={formData.confirm_password}
+          onChange={(e) => handleChange("confirm_password", e.target.value)}
+        />
+        <button type="submit" className="btn btn-signup">
+          Sign Up
+        </button>
+      </form>
+
+      <div className="divider">
+        <span>or</span>
+      </div>
+
+      <GoogleButton onClick={handleGoogleLogin} />
+
+      <div className="signup-text">
+        Already have an Account? <a href="/">Sign in</a>
+      </div>
+    </AuthLayout>
+  );
 }
 
 export default SignUp;

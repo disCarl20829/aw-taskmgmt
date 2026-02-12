@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../config/api';
 
 import AuthLayout from '../components/auth/AuthLayout';
 import InputField from '../components/auth/inputField';
@@ -13,6 +14,20 @@ function SetPassword() {
         user_password: '',
         confirm_password: '',
     });
+
+    useEffect(() => {
+        const checkSession = async () => {
+            try {
+                await api.get('/auth/check');
+            } catch (err) {
+                if (err.response?.status === 400) {
+                    navigate('/dashboard', { replace: true });
+                }
+            }
+        }
+
+        checkSession();
+    }, [navigate]);
 
     const handleChange = (id, value) => {
         setFormData(prev => ({
@@ -35,27 +50,21 @@ function SetPassword() {
         }
 
         try {
-            const res = await fetch('http://localhost:3000/user/update', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ user_password: formData.user_password }),
+            const res = await axios.post('/user/update', {
+                user_password: formData.user_password
             });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                navigate('/dashboard');
-            } else {
-                console.error('Password Settup Failed:', data.message);
-            }
+            const data = res.data;
 
             alert(data.message);
+            navigate('/dashboard');
         } catch (err) {
-            console.error('Error during password setting:', err);
-            alert('Error during password setting. Please try again.');
+            if (err.response) {
+                console.error('Password Setup Failed:', err.response.data.message);
+                alert(err.response.data.message);
+            } else {
+                console.error('Error during password setting:', err.message);
+                alert('Error during password setting. Please try again.');
+            }
         }
     };
 

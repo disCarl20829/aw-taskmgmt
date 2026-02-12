@@ -1,5 +1,8 @@
-const db = require('../db')
+const db = require('../db');
 const bcrypt = require('bcrypt');
+
+const catchAsync = require('../middleware/catch.middleware');
+const messageHandler = require('../utilities/message.handler');
 
 exports.terminate = async (req, res) => {
     let connection;
@@ -21,9 +24,9 @@ exports.terminate = async (req, res) => {
 
         await connection.commit();
 
-        res.json({ message: "Successfully Terminated User!" });
-
         req.session.destroy();
+
+        res.json({ message: "Successfully Terminated User!" });
     } catch (err) {
         if (connection) await connection.rollback();
         console.error(err);
@@ -89,182 +92,181 @@ exports.update = async (req, res) => {
         if (connection) await connection.rollback();
         console.error(err);
         res.status(500).json({ message: "Update Failed: ", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
+    } finally { if (connection) await connection.release() }
 }
 
-exports.searchUser = async (req, res) => {
-    try {
-        const bar = req.body.bar ?? "";
-        const search = `%${bar}%`;
+exports.searchUser = catchAsync(async (req, res) => {
+    const bar = req.body.bar ?? "";
+    const search = `%${bar}%`;
 
-        const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path FROM user WHERE user_name LIKE ? OR user_email LIKE ?",
-            [search, search]
-        )
+    const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path FROM user WHERE user_name LIKE ? OR user_email LIKE ?",
+        [search, search]
+    )
 
-        res.json({ message: "Successfully Retrieved User(s)!", users: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Could not Retrieve User", error: err.message })
-    }
-}
+    res.json({ message: "Successfully Retrieved User(s)!", users: result });
+});
 
-exports.searchAll = async (req, res) => {
-    try {
-        const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path FROM user");
+exports.searchAll = catchAsync(async (req, res) => {
+    const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path FROM user");
 
-        res.json({ message: "Successfully Retrieved Users!", users: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Could not Load All Users", error: err.message })
-    }
-}
+    res.json({ message: "Successfully Retrieved Users!", users: result });
+});
 
-exports.searchByBoard = async (req, res) => {
-    try {
-        const board_id = req.params.board_id || req.body.board_id;
-        const bar = req.body.bar ?? "";
+exports.searchByBoard = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+    const bar = req.body.bar ?? "";
 
-        const search = `%${bar}%`;
+    const search = `%${bar}%`;
 
-        const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_visibility AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-            [board_id, search, search]
-        );
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_user AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
+        [board_id, search, search]
+    );
 
-        res.json({ message: "Successfully Retrieved Users!", users: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Could not Retrieve Board Members", error: err.message })
-    }
-}
+    res.json({ message: "Successfully Retrieved Users!", users: result });
+});
 
-exports.searchByCard = async (req, res) => {
-    try {
-        const card_id = req.params.card_id;
-        const bar = req.body.bar ?? '';
+exports.searchByCard = catchAsync(async (req, res) => {
+    const { card_id } = req.params;
+    const bar = req.body.bar ?? '';
 
-        const search = `%${bar}%`;
+    const search = `%${bar}%`;
 
-        const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-            [card_id, search, search]
-        );
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
+        [card_id, search, search]
+    );
 
-        res.json({ message: "Successfully Retrieved Card Members", users: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Could not Retrieve Card Members" });
-    }
-}
+    res.json({ message: "Successfully Retrieved Card Members", users: result });
+});
 
-exports.searchByChecklist = async (req, res) => {
-    try {
-        const checklist_id = req.params.checklist_id;
-        const bar = req.body.bar ?? '';
+exports.searchByChecklist = catchAsync(async (req, res) => {
+    const { item_id } = req.params;
+    const bar = req.body.bar ?? '';
 
-        const search = `%${bar}%`;
+    const search = `%${bar}%`;
 
-        const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.checklist_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-            [checklist_id, search, search]
-        );
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
+        [item_id, search, search]
+    );
 
-        res.json({ message: "Successfully Retrieved Assigned Checklist", users: result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Could not Assigned Checklist" });
-    }
-}
+    res.json({ message: "Successfully Retrieved Assigned Checklist", users: result });
+});
 
 //-----BOARD MEMBER-----\\
 
 //ADD
-exports.addBoardMember = async (req, res) => {
+exports.addBoardMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
-        const board_id = req.params.board_id;
-        const user_id = req.body.user_id;
+        const { board_id } = req.params;
+        const { user_id } = req.body;
 
         await connection.beginTransaction();
 
-        const [row] = await connection.query('SELECT 1 FROM board_visibility WHERE board_id = ? AND user_id = ? LIMIT 1',
+        const [row] = await connection.query('SELECT 1 FROM board_user WHERE board_id = ? AND user_id = ? LIMIT 1',
             [board_id, user_id]
         );
 
         if (row.length !== 0) {
             await connection.rollback();
-            return res.status(403).json({ message: "User already has access to this board!" });
+            return res.status(403).json({ message: "User Already has Access to this Board!" });
         }
 
-        await connection.query('INSERT INTO board_visibility (board_id, user_id) VALUES (?, ?)',
+        await connection.query('INSERT INTO board_user (board_id, user_id) VALUES (?, ?)',
             [board_id, user_id]
         );
 
-        await connection.commit();
-        res.json({ message: "User successfully added to board!" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Could not add member!", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+        const [newCol] = await connection.query('SELECT * FROM board_user WHERE board_id = ? AND user_id = ?',
+            [board_id, user_id]
+        )
 
-//REMOVE
-exports.removeBoardMember = async (req, res) => {
+        await connection.commit();
+        res.json({ message: "User Successfully Added to Board!", user: newCol[0] });
+    } finally { if (connection) await connection.release() }
+});
+
+//UPDATE
+exports.modifyBoardMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
-        const board_id = req.params.board_id;
-        const user_id = req.body.user_id;
+        const { board_id } = req.params;
+        const { user_id, role } = req.body;
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query('DELETE FROM board_visibility WHERE board_id = ? AND user_id = ?',
+        const [result] = await connection.query('UPDATE board_user SET role = ? WHERE board_id = ? AND user_id = ?',
+            [role, board_id, user_id]
+        );
+
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "User is Not a Member of this board" });
+        }
+
+        const [newCol] = await connection.query('SELECT * FROM board_user WHERE board_id = ? AND user_id = ?',
+            [board_id, user_id]
+        )
+
+        await connection.commit();
+        res.json({ message: "User's Access was Changed!", users: newCol });
+    } finally { if (connection) await connection.release() }
+})
+
+//REMOVE
+exports.removeBoardMember = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const { board_id } = req.params;
+        const { user_id } = req.body;
+
+        await connection.beginTransaction();
+
+        const [result] = await connection.query('DELETE FROM board_user WHERE board_id = ? AND user_id = ?',
             [board_id, user_id]
         );
 
         if (result.affectedRows === 0) {
             await connection.rollback();
-            return res.status(404).json({ message: "User is not a member of this board" });
+            return res.status(404).json({ message: "User is Not a Member of this board" });
         }
 
+        const [newCol] = await connection.query('SELECT * FROM board_user WHERE board_id = ? AND user_id = ?',
+            [board_id, user_id]
+        )
+
         await connection.commit();
-        res.json({ message: "User was removed from board!" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Member could not be removed!", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+        res.json({ message: "User was Revoked Access from Board!", users: newCol });
+    } finally { if (connection) await connection.release() }
+});
 
 //-----CARD MEMBER/ASSIGN-----\\
 
-exports.addCardMember = async (req, res) => {
+exports.addCardMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
         const { board_id, card_id } = req.params;
-        const user_id = req.body.user_id;
+        const { user_id } = req.body;
 
         await connection.beginTransaction();
 
-        const [row] = await connection.query(`SELECT 1 FROM board_visibility WHERE user_id = ? AND board_id = ? LIMIT 1`,
+        const [row] = await connection.query(`SELECT 1 FROM board_user WHERE user_id = ? AND board_id = ? LIMIT 1`,
             [user_id, board_id]
         );
 
         if (row.length === 0) {
             await connection.rollback();
-            return res.status(403).json({ message: "User is not a board member" });
+            return res.status(403).json({ message: "User is Not a Board Member" });
         }
 
         const [assignedCard] = await connection.query(`SELECT 1 FROM card_member WHERE card_id = ? AND user_id = ? LIMIT 1`,
@@ -273,7 +275,7 @@ exports.addCardMember = async (req, res) => {
 
         if (assignedCard.length > 0) {
             await connection.rollback();
-            return res.status(403).json({ message: "User is already a member of this card!" });
+            return res.status(403).json({ message: "User is Already a Member of this Card!" });
         }
 
         await connection.query(
@@ -281,25 +283,28 @@ exports.addCardMember = async (req, res) => {
             [card_id, user_id]
         );
 
+        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const target = await messageHandler.getUser(user_id);
+
+        await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
+            [actor.user_id, board_id, card_id, 'JOINED_CARD', JSON.stringify({ user: target.user_name })]
+        )
+
         await connection.commit();
-        res.json({ message: "User was added to card members" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Member could not be added to card", error: err.message });
+        res.json({ message: "User was Added to Card Members" });
     } finally {
         if (connection) await connection.release();
     }
-}
+});
 
-exports.removeCardMember = async (req, res) => {
+exports.removeCardMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
-        const card_id = req.params.card_id;
-        const user_id = req.body.user_id;
+        const { board_id, card_id } = req.params;
+        const { user_id } = req.body;
 
         await connection.beginTransaction();
 
@@ -309,74 +314,93 @@ exports.removeCardMember = async (req, res) => {
 
         if (result.affectedRows === 0) {
             await connection.rollback();
-            return res.status(404).json({ message: "User is not a member of this card" });
+            return res.status(404).json({ message: "User is Not a Member of this Card" });
         }
+
+        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const target = await messageHandler.getUser(user_id);
+
+        await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
+            [actor.user_id, board_id, card_id, 'LEFT_CARD', JSON.stringify({ user: target.user_name })]
+        )
 
         await connection.commit();
         return res.json({ message: "User was Removed from Card" })
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Member could not be removed to card", error: err.message });
-    } finally {
-        if (connection) await connection.release();
-    }
-}
+    } finally { if (connection) await connection.release() }
+});
 
 //-----CHECKLIST ASSIGN-----\\
 
-exports.assignMember = async (req, res) => {
+exports.assignMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
-        const { board_id, card_id } = req.params;
-        const { checklist_id, user_id } = req.body;
+        const board_id = req.params.board_id || req.body.board_id;
+        const card_id = req.params.card_id || req.body.card_id;
+        const user_id = req.body.user_id || req.params.user_id;
+        const item_id = req.body.item_id || req.params.item_id;
 
         await connection.beginTransaction();
 
-        const [row] = await connection.query(`SELECT 1 FROM board_visibility AS t1 JOIN card_member AS t2 ON t1.user_id = t2.user_id WHERE t1.board_id = ? AND t2.card_id = ? AND (t1.user_id = ? OR t2.user_id = ?)  LIMIT 1`,
-            [board_id, card_id, user_id, user_id]
+        const [getItem] = await connection.query('SELECT * FROM checklist_items WHERE item_id = ?',
+            [item_id]
+        )
+
+        if (getItem.length === 0) {
+            await connection.rollback();
+            return res.status(403).json({ message: "Unable to Find Item" });
+        }
+
+        const [row] = await connection.query(`SELECT t1.* FROM board_user AS t1 JOIN card_member AS t2 ON t1.user_id = t2.user_id WHERE t1.board_id = ? AND t2.card_id = ? AND t1.user_id = ? LIMIT 1`,
+            [board_id, card_id, user_id]
         );
 
         if (row.length === 0) {
             await connection.rollback();
-            return res.status(403).json({ message: "User is not a card member" });
+            return res.status(403).json({ message: "User is Not a Card Member" });
         }
 
-        const [assignedRow] = await connection.query('SELECT 1 FROM assigned_checklist WHERE checklist_id = ? AND user_id = ? LIMIT 1',
-            [checklist_id, user_id]
+        const [assignedRow] = await connection.query('SELECT * FROM assigned_checklist WHERE item_id = ? AND user_id = ? LIMIT 1',
+            [item_id, user_id]
         );
 
         if (assignedRow.length > 0) {
             await connection.rollback();
-            return res.status(403).json({ message: "User is already assigned to checklist" });
+            return res.status(409).json({ message: "User is already assigned to checklist" });
         }
 
-        await connection.query('INSERT INTO assigned_checklist (checklist_id, user_id) VALUES (?, ?)',
-            [checklist_id, user_id]
+        await connection.query('INSERT INTO assigned_checklist (item_id, user_id) VALUES (?, ?)',
+            [item_id, user_id]
         );
 
+        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const target = await messageHandler.getUser(user_id);
+
+        const actorName = req.session.user.user_id === user_id ? "self" : actor.user_name;
+
+        await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
+            [actor.user_id, board_id, card_id, 'ASSIGNED_ITEM', JSON.stringify({ user: target.user_name, item: getItem[0].item_text, actor: actorName })]
+        )
+
         await connection.commit();
-        res.json({ message: "User successfully assigned to checklist!" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Could not assign member to checklist", error: err.message });
+        res.json({ message: "User Successfully Assigned to Checklist!" });
     } finally {
         if (connection) await connection.release();
     }
-}
+});
 
-exports.unassignMember = async (req, res) => {
+exports.unassignMember = catchAsync(async (req, res) => {
     let connection;
 
     try {
         connection = await db.getConnection();
 
-        const checklist_id = req.body.checklist_id || req.params.checklist_id;
-        const user_id = req.body.user_id;
+        const board_id = req.body.board_id || req.params.board_id;
+        const card_id = req.body.card_id || req.params.card_id;
+        const user_id = req.body.user_id || req.params.user_id;
+        const item_id = req.body.item_id || req.params.item_id;
 
         await connection.beginTransaction();
 
@@ -385,23 +409,136 @@ exports.unassignMember = async (req, res) => {
             return res.status(400).json({ message: "Must provide user_id" });
         }
 
-        const [result] = await connection.query('DELETE FROM assigned_checklist WHERE checklist_id = ? AND user_id = ?',
-            [checklist_id, user_id]
+        const [getItem] = await connection.query('SELECT * FROM checklist_items WHERE item_id = ?',
+            [item_id]
+        )
+
+        if (getItem.length === 0) {
+            await connection.rollback();
+            return res.status(403).json({ message: "Unable to Find Item" });
+        }
+
+        const [result] = await connection.query('DELETE FROM assigned_checklist WHERE item_id = ? AND user_id = ?',
+            [item_id, user_id]
         );
 
         if (result.affectedRows === 0) {
             await connection.rollback();
-            return res.status(404).json({ message: "User is not assigned to this checklist" });
+            return res.status(404).json({ message: "User was Not Assigned to this Checklist" });
         }
+
+        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const target = await messageHandler.getUser(user_id);
+
+        const actorName = req.session.user.user_id === user_id ? "self" : actor.user_name;
+
+        await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
+            [actor.user_id, board_id, card_id, 'UNASSIGNED_ITEM', JSON.stringify({ user: target.user_name, item: getItem[0].item_text, actor: actorName })]
+        )
 
         await connection.commit();
 
-        res.json({ message: "User was unassigned from checklist!" });
-    } catch (err) {
-        if (connection) await connection.rollback();
-        console.error(err);
-        res.status(500).json({ message: "Member could not be unassigned from checklist", error: err.message });
+        res.json({ message: "User was Unassigned from checklist!" });
     } finally {
         if (connection) await connection.release();
     }
-}
+});
+
+exports.publishComment = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const user_id = req.session.user.user_id;
+        const { card_id, description } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM card WHERE card_id = ?',
+            [card_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(400).json({ message: "Unable to Find Card" });
+        }
+
+        await connection.query('INSERT INTO comments (card_id, user_id, description) VALUES (?, ?, ?)',
+            [card_id, user_id, description]
+        )
+
+        await connection.commit();
+        res.json({ message: "Comment Successful!" });
+    } finally { if (connection) await connection.release() }
+})
+
+exports.editComment = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const user_id = req.session.user.user_id;
+        const { comment_id, description } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM comments WHERE comment_id = ? AND user_id = ?',
+            [comment_id, user_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(400).json({ message: "Unable to Find Comment Index" });
+        }
+
+        await connection.query('UPDATE comments SET description = ? WHERE comment_id = ? AND user_id = ?',
+            [description, comment_id, user_id]
+        )
+
+        await connection.commit();
+
+        res.json({ message: "Comment Changed!" });
+    } finally { if (connection) await connection.release() }
+})
+
+exports.deleteComment = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const user_id = req.session.user.user_id;
+        const { comment_id } = req.body;
+
+        await connection.beginTransaction();
+
+        const [row] = await connection.query('SELECT * FROM comments WHERE comment_id = ? AND user_id = ?',
+            [comment_id, user_id]
+        )
+
+        if (row.length === 0) {
+            await connection.rollback();
+            return res.status(400).json({ message: "Unable to Find Comment Index" });
+        }
+
+        await connection.query('DELETE FROM comments WHERE comment_id = ? AND user_id = ?',
+            [comment_id, user_id]
+        )
+
+        await connection.commit();
+
+        res.json({ message: "Comment Deleted!" });
+    } finally { if (connection) await connection.release() }
+})
+
+exports.getComment = catchAsync(async (req, res) => {
+    const { card_id } = req.params;
+
+    const [comments] = await db.query('SELECT * FROM comments WHERE card_id = ? ORDER BY comment_created ASC',
+        [card_id]
+    )
+
+    res.json({ message: "Retrieved Comments from Card Successfully", comments: comments });
+})

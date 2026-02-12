@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../config/api";
 
 import AuthLayout from "../components/auth/AuthLayout";
 import InputField from "../components/auth/inputField";
@@ -26,12 +27,7 @@ function SignIn() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3000/auth/signin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
+      const res = await api.post("/auth/signin", {
         body: JSON.stringify(formData),
       });
 
@@ -50,7 +46,7 @@ function SignIn() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3000/auth/google";
+    window.location.href = "http://192.168.1.18:3000/auth/google";
   };
 
   return (

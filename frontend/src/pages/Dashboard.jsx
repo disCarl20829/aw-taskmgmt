@@ -78,6 +78,8 @@ const Dashboard = () => {
 
           <ListGroup.Item
             action
+            as={Link}
+            to="/activity"
             className="bg-dark text-light border-secondary"
           >
             Activity
@@ -85,6 +87,8 @@ const Dashboard = () => {
 
           <ListGroup.Item
             action
+            as={Link}
+            to="/cards"
             className="bg-dark text-light border-secondary"
           >
             Card

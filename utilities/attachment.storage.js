@@ -12,17 +12,17 @@ function generateFileName(card_id, originalPath) {
 }
 
 async function duplicateAttachmentFile(oldPath, newCardId) {
-    const uploadBase = path.join(__dirname, '../public/uploads/attachment');
-    const newDir = path.join(uploadBase, `attachment-${newCardId}`);
+    const newDir = path.join(__dirname, '../public/attachment', `attachment-${newCardId}`);
 
     await ensureDir(newDir);
 
     const newFileName = generateFileName(newCardId, oldPath);
     const newPath = path.join(newDir, newFileName);
 
-    await fs.copyFile(oldPath, newPath);
+    const fullOldPath = path.join(__dirname, '../public', oldPath);
+    await fs.copyFile(fullOldPath, newPath);
 
-    return newPath;
+    return `attachment/attachment-${newCardId}/${newFileName}`;
 }
 
 module.exports = {
