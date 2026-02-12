@@ -16,7 +16,6 @@ const BoardButton = () => {
   const handleCloseModal = () => setShowModal(false);
   const handleShowModal = () => setShowModal(true);
 
-  // Close overlay when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -30,6 +29,7 @@ const BoardButton = () => {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
+      z;
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showCollections]);

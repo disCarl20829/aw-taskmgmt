@@ -16,6 +16,7 @@ import Cards from "./pages/Cards";
 import CardBoards from "./pages/CardBoards";
 import SettingPage from "./pages/SettingPage";
 import BoardButton from "./pages/BoardButton";
+import CardBoards from "./pages/CardBoards";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/cardBoards" element={<CardBoards/>}/>
         <Route path="/settingPage" element={<SettingPage />} />
         <Route path="/boardbutton" element={<BoardButton />} />
+        <Route path="/cardboards" element={<CardBoards />} />
       </Routes>
     </BrowserRouter>
   );
