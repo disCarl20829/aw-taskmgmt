@@ -2,6 +2,7 @@ const express = require('express');
 
 const authMiddleware = require('../middleware/auth.middleware');
 const taskMiddleware = require('../middleware/task.middleware');
+const mailMiddleware = require('../middleware/mail.middleware');
 
 const userController = require('../controllers/user.controller');
 
@@ -17,19 +18,20 @@ router.get('/searchAll', userController.searchAll);
 router.get('/searchUser', userController.searchUser);
 router.get('/searchBoard/:board_id', userController.searchByBoard);
 router.get('/searchCard/:card_id', userController.searchByCard)
-router.get('/searchChecklist/:card_id', userController.searchByChecklist)
+router.get('/searchChecklist/:item_id', userController.searchByChecklist)
 
 //BOARD MEMBER
-router.post('/boardMember/:board_id', authMiddleware, userController.addBoardMember)
+router.post('/boardMember/:board_id', authMiddleware, userController.addBoardMember, mailMiddleware)
+router.patch('/boardMember/:board_id', authMiddleware, userController.modifyBoardMember);
 router.delete('/boardMember/:board_id', authMiddleware, userController.removeBoardMember);
 
 //CARD MEMBER/ASSIGN
-router.post('/cardMember/:board_id/:card_id', authMiddleware, userController.addCardMember);
+router.post('/cardMember/:board_id/:card_id', authMiddleware, userController.addCardMember, mailMiddleware);
 router.delete('/cardMember/:board_id/:card_id', authMiddleware, userController.removeCardMember);
 
 //CHECKLIST ASSIGN
-router.post('/checklist/:item_id', authMiddleware, userController.assignMember);
-router.delete('/checklist/:item_id', authMiddleware, userController.unassignMember);
+router.post('/checklist/:board_id/:card_id/:item_id', protect, userController.assignMember, mailMiddleware);
+router.delete('/checklist/:board_id/:card_id/:item_id', protect, userController.unassignMember);
 
 //COMMENT CARD
 router.post('/comment/', protect, userController.publishComment);

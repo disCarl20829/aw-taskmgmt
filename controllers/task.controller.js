@@ -6,7 +6,7 @@ const path = require('path');
 const catchAsync = require('../middleware/catch.middleware')
 const messageHandler = require('../utilities/message.handler')
 const duplicateAttachmentFile = require('../utilities/attachment.storage');
-const { check } = require('./auth.controller');
+const emit = require('../utilities/socket');
 
 //-----BOARD HANDLING-----\\
 
@@ -38,6 +38,7 @@ exports.createBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.emitGlobal(req, 'board:created', { board: board[0] })
         res.json({ message: "Board Successfully Created!", board: board[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -50,7 +51,7 @@ exports.patchBoard = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const board_id = req.params.board_id;
-        const user_id = req.session.user.user_id;
+        //const user_id = req.session.user.user_id;
         const { board_title, board_description, board_background, board_visibility } = req.body;
 
         await connection.beginTransaction();
@@ -73,12 +74,9 @@ exports.patchBoard = catchAsync(async (req, res) => {
             [updatedTitle, updatedDescription, updatedBackground, updatedVisibility, board_id]
         );
 
-        const [board] = await db.query(`SELECT DISTINCT t1.* FROM board AS t1 LEFT JOIN board_user AS t2 ON t1.board_id = t2.board_id AND t2.user_id = ? WHERE t1.board_visibility IN ('public', 'workspace') OR t1.board_owner = ? OR t1.board_visibility = 'private' AND t2.user_id IS NOT NULL`,
-            [user_id, user_id]
-        );
-
         await connection.commit();
 
+        emit.emitBoard(req, 'board:updated', { board_id, board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } })
         res.json({ message: "Board Patched Successfully!", board: board });
     } finally { if (connection) await connection.release() }
 });
@@ -114,6 +112,7 @@ exports.deleteBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.emitGlobal(req, 'board:deleted', { board_id })
         res.json({ message: "Board was Deleted Successfully!", board: board });
     } finally { if (connection) await connection.release() }
 });
@@ -128,6 +127,30 @@ exports.getBoards = catchAsync(async (req, res) => {
 
     res.json({ message: "Boards was Successfully Retrieved!", boards: result })
 });
+
+exports.aboutBoard = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+    const user_id = req.session.user.user_id;
+
+    let about = {};
+
+    const [board] = await db.query('SELECT * FROM board WHERE board_id = ?',
+        board_id
+    )
+
+    if (board.length === 0) {
+        return res.status(404).json({ message: "Could not Find Specific Board." });
+    }
+
+    const [admin] = await db.query(`SELECT *, CASE WHEN user_id = ? THEN true ELSE false END AS isUser FROM board_user WHERE board_id = ? AND role = 'admin'`,
+        [board_id, user_id]
+    )
+
+    about.board_description = board[0];
+    about.admin = admin;
+
+    res.json({ message: "Retrieved Board Information Successfully!", about: about });
+})
 
 //BACKGROUND
 exports.boardBackground = catchAsync(async (req, res) => {
@@ -173,6 +196,7 @@ exports.boardBackground = catchAsync(async (req, res) => {
                 .catch(err => console.error("Background Deletion Failed!", err))
         }
 
+        emitBoard(req, board_id, 'board:background-updated', { board_id, backgroundF });
         res.json({ message: "Placed Background for Board Successfully!" })
     } finally { if (connection) await connection.release() }
 })
@@ -204,6 +228,7 @@ exports.createList = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'list:created', { list: list[0] });
         res.json({ message: "List Created Successfully!", list: list[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -239,6 +264,7 @@ exports.patchList = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, row[0].board_id, 'list:updated', { list_id, list: { list_name: updatedName, list_color: updatedColor, list_position: updatedPosition } });
         res.json({ message: "List Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -260,6 +286,7 @@ exports.deleteList = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'list:deleted', { list_id });
         res.json({ message: "List was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -269,7 +296,7 @@ exports.getLists = catchAsync(async (req, res) => {
     const board_id = req.params.board_id;
     const user_id = req.session.user.user_id;
 
-    const [lists] = await db.query('SELECT t1.*, t2.role FROM list AS t1 JOIN board_user AS t2 ON t1.board_id = t2.board_id WHERE t1.board_id = ? AND t2.user_id = ? ORDER BY t1.list_position ASC',
+    const [lists] = await db.query('SELECT t1.*, t2.role FROM list AS t1 JOIN board_user AS t2 ON t1.board_id = t2.board_id WHERE t1.board_id = ? AND t2.user_id = ? AND t1.is_archived = 0 ORDER BY t1.list_position ASC',
         [board_id, user_id]
     );
 
@@ -279,7 +306,7 @@ exports.getLists = catchAsync(async (req, res) => {
 
     const list_ids = lists.map(l => l.list_id);
 
-    const [cards] = await db.query('SELECT * FROM card WHERE list_id IN (?) ORDER BY card_position ASC',
+    const [cards] = await db.query('SELECT * FROM card WHERE is_archived = 0 list_id IN (?) ORDER BY card_position ASC',
         [list_ids]
     );
 
@@ -360,6 +387,7 @@ exports.createCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'card:created', { card: card[0] });
         res.json({ message: "Card Created Successfully!", card: card[0] })
     } finally { if (connection) await connection.release() }
 });
@@ -423,6 +451,7 @@ exports.patchCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'card:updated', { card_id, card: { card_name: updatedName, card_description: updatedDescription, card_position: updatedPosition, completed: updatedCompleted } });
         res.json({ message: "Card Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -460,6 +489,7 @@ exports.deleteCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'card:deleted', { card_id });
         res.json({ message: "Card was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -557,6 +587,7 @@ exports.createChecklist = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'checklist:created', { checklist: checklist[0] });
         res.json({ message: "Checklist Created Successfully!", checklist: checklist[0] })
     } catch (err) {
         if (connection) await connection.rollback();
@@ -599,6 +630,7 @@ exports.patchChecklist = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'checklist:updated', { checklist_id, changes: { checklist_title: updatedTitle, checklist_position: updatedPosition } });
         res.json({ message: "Checklist Patched Successfully!", checklist: checklist[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -628,6 +660,7 @@ exports.deleteChecklist = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'checklist:deleted', { checklist_id });
         res.json({ message: "Checklist was Deleted Successfully!", checklist });
     } finally {
         if (connection) await connection.release();
@@ -708,6 +741,8 @@ exports.addItem = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emitBoard(req, board_id, 'item:created', { item: item[0] });
         res.json({ message: "Checklist Item Created Successfully!", item: item[0] })
     } finally { if (connection) await connection.release() }
 });
@@ -755,6 +790,7 @@ exports.updateItem = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'item:updated', { item_id, changes: { updatedText, updatedCompleted } });
         res.json({ message: "Checklist Item Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -776,6 +812,7 @@ exports.removeItem = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'item:deleted', { item_id });
         res.json({ message: "Checklist Item was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -838,6 +875,7 @@ exports.addAttachment = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'attachment:added', { card_id, attachment_name });
         res.json({ message: "Media Attached Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -877,6 +915,7 @@ exports.editAttachment = catchAsync(async (req, res) => {
 
         // NOTE: UPDATE ONLY NAME AND URL BUT NO MOVE ATTACHMENT FEATURE
 
+        emitBoard(req, board_id, 'attachment:updated', { attachment_id, attachment_name });
         await connection.commit();
 
         res.json({ message: "Attachment Edited Successfully!" });
@@ -925,9 +964,71 @@ exports.removeAttachment = catchAsync(async (req, res) => {
                 .catch(err => console.error('Attachment File Deletion Failed:', err));
         }
 
+        emitBoard(req, board_id, 'attachment:removed', { attachment_id });
         res.json({ message: "Attachment was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
+
+//-----ARCHIVE-----\\
+
+exports.archiveList = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+    const list_id = req.params.list_id || req.body.list_id;
+    const { is_archived } = req.body;
+
+    await db.query('UPDATE list SET is_archived = ? WHERE list_id = ?',
+        [is_archived, list_id]
+    );
+
+    const [list] = await db.query('SELECT * FROM list WHERE list_id = ?',
+        [list_id]
+    );
+
+    const event = is_archived ? 'list:archived' : 'list:unarchived';
+
+    emitBoard(req, board_id, event, { list: list[0] });
+    res.json({ message: is_archived ? 'List Archived.' : 'List Unarchived.', list: list[0] });
+});
+
+exports.getArchivedList = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+
+    const [result] = await db.query('SELECT * FROM list WHERE board_id = ? AND is_archived = 1',
+        [board_id]
+    )
+
+    res.json({ message: "Archived Lists were Retrieved.", archived: result });
+})
+
+exports.archiveCard = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+    const card_id = req.params.card_id || req.body.card_id;
+    const { is_archived } = req.body;
+
+    await db.query('UPDATE card SET is_archived = ? WHERE card_id = ?',
+        [is_archived, card_id]
+    );
+
+    const [card] = await db.query('SELECT * FROM card WHERE card_id = ?',
+        [card_id]
+    );
+
+    const event = is_archived ? 'card:archived' : 'card:unarchived';
+
+    emitBoard(req, board_id, event, { card: card[0] });
+    res.json({ message: is_archived ? 'Card Archived.' : 'Card Unarchived.', card: card[0] });
+});
+
+
+exports.getArchivedCard = catchAsync(async (req, res) => {
+    const board_id = req.params.board_id || req.body.board_id;
+
+    const [result] = await db.query('SELECT t1.* FROM card AS t1 JOIN list AS t2 ON t1.list_id = t2.list_id WHERE t2.board_id = ? AND t1.is_archived = 1',
+        [board_id]
+    )
+
+    res.json({ message: "Archived Cards were Retrieved.", archived: result });
+})
 
 //-----MISCALLANEOUS FEATURES-----\\
 
@@ -946,7 +1047,11 @@ exports.getActivityLogs = catchAsync(async (req, res) => {
         [card_id]
     )
 
-    res.json({ message: "Activity Logs were Retrieved!", activity_logs: activity_logs })
+    for (const log of activity_logs) {
+        log.message = messageHandler.buildActivity(log)
+    }
+
+    res.json({ message: "User's Activity Logs were Retrieved!", activity_logs: activity_logs })
 });
 
 //REFRESH UNLESS DIFFERENT BOARD/LIST
@@ -995,6 +1100,7 @@ exports.moveCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emitBoard(req, board_id, 'card:moved', { card_id, from_list: cardResult[0].list_id, to_list: new_list_id, position: new_position });
         res.json({ message: "Card Moved Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -1146,6 +1252,8 @@ exports.duplicateCard = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emitBoard(req, new_board_id, 'card:duplicated', { new_card_id });
         res.json({ message: "Card Duplicated Successfully!" });
     } catch (err) {
         if (connection) {
@@ -1471,6 +1579,10 @@ exports.moveList = catchAsync(async (req, res) => {
         const board_title = boardResult[0].board_title;
 
         await connection.commit();
+
+        emit.emitToBoard(req, original_board_id, 'list:moved-out', { list_id, to_board_id: target_board_id });
+
+        emit.emitToBoard(req, target_board_id, 'list:moved-in', { list_id, from_board_id: original_board_id, new_position });
         res.json({ message: "List Moved Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -1509,6 +1621,59 @@ exports.convertCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.emitToBoard(req, board_id, 'card:created', { list_id: checklistItem.list_id, card: { card_name: checklistItem.item_text, due_date: checklistItem.due_date, due_time: checklistItem.due_time } });
         res.json({ message: "Checklist Item Converted to Card Successfully!" });
     } finally { if (connection) await connection.release() }
 });
+
+exports.userCard = catchAsync(async (req, res) => {
+    const user_id = req.session.user.user_id
+
+    const [result] = await db.query('SELECT t1.card_id, t2.card_name, t2.completed, t2.due_date, t2.due_time, t2.list_id, t2.list_name, t3.board_title, t3.board_id FROM card AS t1 JOIN list AS t2 ON t1.list_id = t2.list_id JOIN board AS t3 ON t2.board_id = t3.board_id JOIN card_member AS t4 ON t1.card_id = t4.card_id WHERE t4.user_id = ? ORDER BY t3.board_id ASC',
+        [user_id]
+    );
+
+    if (result.length === 0) {
+        return res.json({ message: "Retrieved User's Cards!", cards: [] })
+    }
+
+    const card_ids = result.map(c => c.card_id);
+
+    const labelMap = new Map();
+
+    const [labels] = await db.query('SELECT t1.card_id, t2.* FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?',
+        [card_ids]
+    );
+
+    labels.forEach(label => {
+        if (!labelMap.has(label.card_id)) {
+            labelMap.set(label.card_id, []);
+        }
+
+        labelMap.get(label.card_id).push(label);
+    })
+
+    result.forEach(card => {
+        card.labels = labelMap.get(card.card_id) || [];
+    })
+
+    return res.json({ message: "Retrieved User's Cards!", cards: result })
+})
+
+exports.userActivity = catchAsync(async (req, res) => {
+    const user_id = req.session.user.user_id;
+
+    const [result] = await db.query('SELECT t1.*, t2.board_id, t2.board_title FROM activity_logs AS t1 JOIN board AS t2 ON t1.board_id = t2.board_id WHERE t1.user_id = ? ORDER BY t1.created_at DESC',
+        [user_id]
+    )
+
+    if (result.length === 0) {
+        return res.json({ message: "Retrieved User's Activity", activity_logs: [] })
+    }
+
+    for (const log of result) {
+        log.message = messageHandler.buildActivity(log)
+    }
+
+    res.json({ message: "Retrieved User's were Retrieved!", activity_logs: result })
+})

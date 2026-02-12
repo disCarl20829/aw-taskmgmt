@@ -1,6 +1,7 @@
 const db = require('../db');
 
 const catchAsync = require('../middleware/catch.middleware')
+const emit = require('../utilities/socket');
 
 exports.placeColorList = catchAsync(async (req, res) => {
     let connection;
@@ -27,6 +28,8 @@ exports.placeColorList = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'list-color-updated', { list_id, list_color });
         res.json({ message: "Successfully Placed Color for this List!" });
     } finally { if (connection) await connection.release() }
 });
@@ -55,6 +58,8 @@ exports.removeColorList = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'list-color-removed', { list_id });
         res.json({ message: "Successfully Removed Color for this List!" });
     } finally { if (connection) await connection.release() }
 });
@@ -93,6 +98,7 @@ exports.listLabel = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.toBoard(board_id, 'card-label-added', { card_id, label_id, label_color });
         res.json({ message: "Initiated Label for this Board!" })
     } finally { if (connection) await connection.release() }
 });
@@ -123,6 +129,8 @@ exports.unlistLabel = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'card-label-removed', { card_id, label_id });
         res.json({ message: "Unlisted Label from Card!" });
     } finally { if (connection) await connection.release() }
 });
@@ -152,6 +160,8 @@ exports.editLabel = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'label-updated', { label_id, label_name });
         res.json({ message: "Successfully Modified Label!" });
     } finally { if (connection) await connection.release() }
 });
@@ -181,6 +191,8 @@ exports.removeLabel = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'label-deleted', { label_id });
         res.json({ message: "Unlisted Label from Card." });
     } finally { if (connection) await connection.release() }
 });
@@ -189,8 +201,7 @@ exports.removeLabel = catchAsync(async (req, res) => {
 exports.retrieveLabel = catchAsync(async (req, res) => {
     const { board_id, card_id } = req.params;
 
-    const [result] = await db.query(
-        'SELECT t1.*, CASE WHEN t2.card_id IS NOT NULL THEN true ELSE false END AS assigned FROM labels AS t1 LEFT JOIN card_labels AS t2 ON t1.label_id = t2.label_id AND t2.card_id = ? WHERE t1.board_id = ?',
+    const [result] = await db.query('SELECT t1.*, CASE WHEN t2.card_id IS NOT NULL THEN true ELSE false END AS assigned FROM labels AS t1 LEFT JOIN card_labels AS t2 ON t1.label_id = t2.label_id AND t2.card_id = ? WHERE t1.board_id = ?',
         [card_id, board_id]
     );
 

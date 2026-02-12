@@ -25,13 +25,16 @@ passport.use(new GoogleStrategy(
         callbackURL: 'http://localhost:3000/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
-        const connection = await db.getConnection();
+        let connection
 
         try {
+            connection = await db.getConnection();
+
             const email = profile.emails[0].value;
 
-            const [rows] = await connection.query(
-                'SELECT * FROM user WHERE user_email = ?',
+            await connection.beginTransaction();
+
+            const [rows] = await connection.query('SELECT * FROM user WHERE user_email = ?',
                 [email]
             );
 
@@ -66,13 +69,12 @@ passport.use(new GoogleStrategy(
 
                 const board_id = boardResult.insertId;
 
-                await connection.query('INSERT INTO board_visibility (board_id, user_id ) VALUES (?, ?)',
-                    [board_id, user_id]
+                await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)',
+                    [board_id, user_id, 'admin']
                 )
 
                 for (let i = 0; i < defaultLists.length; i++) {
-                    await connection.query(
-                        'INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
+                    await connection.query('INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
                         [board_id, defaultLists[i], i + 1]
                     );
                 }

@@ -39,8 +39,7 @@ exports.register = async (req, res) => {
 
         const user_id = result.insertId;
 
-        const [boardResult] = await connection.query(
-            'INSERT INTO board (board_owner, board_title, board_description) VALUES (?, ?, ?)',
+        const [boardResult] = await connection.query('INSERT INTO board (board_owner, board_title, board_description) VALUES (?, ?, ?)',
             [user_id, 'My First Board', 'Welcome to your task manager!']
         );
 
@@ -51,8 +50,7 @@ exports.register = async (req, res) => {
         )
 
         for (let i = 0; i < defaultLists.length; i++) {
-            await connection.query(
-                'INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
+            await connection.query('INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
                 [board_id, defaultLists[i], i + 1]
             );
         }
@@ -72,8 +70,7 @@ exports.signin = async (req, res) => {
     try {
         const { user_input, user_password } = req.body;
 
-        const [user] = await db.query(
-            'SELECT * FROM user WHERE user_name = ? OR user_email = ?',
+        const [user] = await db.query('SELECT * FROM user WHERE user_name = ? OR user_email = ?',
             [user_input, user_input]
         );
 

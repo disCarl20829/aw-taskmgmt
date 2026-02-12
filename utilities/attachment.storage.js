@@ -25,6 +25,4 @@ async function duplicateAttachmentFile(oldPath, newCardId) {
     return `attachment/attachment-${newCardId}/${newFileName}`;
 }
 
-module.exports = {
-    duplicateAttachmentFile
-};
+module.exports = duplicateAttachmentFile;

@@ -1,10 +1,10 @@
 const db = require('../db')
 
-const logs = require('./activity.log..json');
+const logs = require('./activity.log.json');
 const level = require('./activity.level.json');
 
 exports.getUser = async (user_id, conn = null) => {
-    const rows = await db.query('SELECT user_id, user_name FROM user WHERE user_id = ?',
+    const [rows] = await db.query('SELECT user_id, user_name FROM user WHERE user_id = ?',
         [user_id]
     )
 
@@ -12,7 +12,7 @@ exports.getUser = async (user_id, conn = null) => {
 }
 
 exports.buildActivity = (row) => {
-    const config = logs(row.actionType) || log.OTHERS;
+    const config = logs(row.actionType) || logs.OTHERS;
 
     let message = config.template;
     let data = {};
@@ -27,12 +27,5 @@ exports.buildActivity = (row) => {
         message = message.replace(`{${key}}`, data[key]);
     }
 
-    return {
-        log_id: row.log_id,
-        message,
-        level: levels[config.level] || levels.info,
-        created_at: row.created_at,
-        board_id: row.board_id,
-        card_id: row.card_id
-    };
+    return { message };
 }

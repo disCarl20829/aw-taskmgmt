@@ -14,8 +14,8 @@ router.post('/colorList/:board_id/:list_id', protect, customController.placeColo
 router.delete('/colorList/:board_id/:list_id', protect, customController.removeColorList);
 
 //MODIFY LABEL
-router.patch('/colorList/:board_id/:label_id', protect, customController.editLabel);
-router.delete('/colorList/:board_id', protect, customController.removeLabel)
+router.patch('/label/:board_id/:label_id', protect, customController.editLabel);
+router.delete('/label/:board_id', protect, customController.removeLabel)
 
 //LABEL FROM CARD (ADD, REMOVE, RETRIEVE)
 router.post('/listLabel/:board_id/:card_id', protect, customController.listLabel);

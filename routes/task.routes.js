@@ -18,8 +18,8 @@ router.delete('/boards/:board_id', protect, taskController.deleteBoard);
 router.get('/boards', authMiddleware, taskController.getBoards);
 
 //BACKGROUND
-router.patch('/boardbg/:board_id/photo', protect, boardbgMiddleware, uploadMiddleware.single("file"), taskController.boardBackground);
-router.patch('/boardbg/:board_id/color', protect, boardbgMiddleware, taskController.boardBackground);
+router.patch('/boardbg/:board_id/photo', protect, boardbgMiddleware.single("file"), taskController.boardBackground);
+router.patch('/boardbg/:board_id/color', protect, taskController.boardBackground);
 
 //LIST
 router.post('/lists/:board_id', protect, taskController.createList);
@@ -38,6 +38,12 @@ router.post('/checklists/:board_id/:card_id', protect, taskController.createChec
 router.patch('/checklists/:checklist_id', protect, taskController.patchChecklist);
 router.delete('/checklists/:checklist_id', protect, taskController.deleteChecklist);
 router.get('/checklists/:card_id', protect, taskController.getChecklist);
+
+//ARCHIVE
+router.patch('archiveList/:board_id/:list_id', protect, taskController.archiveList);
+router.get('archiveList/:board_id', protect, taskController.getArchivedList);
+router.patch('archiveCard/:board_id/:card_id', protect, taskController.archiveCard);
+router.get('archiveList/:board_id', protect, taskController.getArchivedCard);
 
 //-----UTILITIES ADD-----\\\
 
@@ -61,5 +67,7 @@ router.post('/duplicateList/:board_id/:list_id', protect, taskController.duplica
 router.post('/convertCard/:board_id/:item_id', protect, taskController.convertCard);
 
 router.get('/activityLogs/:card_id', protect, taskController.getActivityLogs);
+router.get('/userCard/', protect, taskController.userCard);
+router.get('/userActivity/', protect, taskController.userActivity);
 
 module.exports = router;

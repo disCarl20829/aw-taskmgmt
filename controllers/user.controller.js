@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 
 const catchAsync = require('../middleware/catch.middleware');
 const messageHandler = require('../utilities/message.handler');
+const emit = require('../utilities/socket');
 
 exports.terminate = async (req, res) => {
     let connection;
@@ -118,8 +119,8 @@ exports.searchByBoard = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_user AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-        [board_id, search, search]
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_user AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.board_id = ?',
+        [board_id, search, search, board_id]
     );
 
     res.json({ message: "Successfully Retrieved Users!", users: result });
@@ -131,8 +132,8 @@ exports.searchByCard = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-        [card_id, search, search]
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.card_id = ?',
+        [card_id, search, search, card_id]
     );
 
     res.json({ message: "Successfully Retrieved Card Members", users: result });
@@ -144,8 +145,8 @@ exports.searchByChecklist = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE t1.user_name LIKE ? OR t1.user_email LIKE ?',
-        [item_id, search, search]
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.item_id = ?',
+        [item_id, search, search, item_id]
     );
 
     res.json({ message: "Successfully Retrieved Assigned Checklist", users: result });
@@ -174,17 +175,31 @@ exports.addBoardMember = catchAsync(async (req, res) => {
             return res.status(403).json({ message: "User Already has Access to this Board!" });
         }
 
-        await connection.query('INSERT INTO board_user (board_id, user_id) VALUES (?, ?)',
-            [board_id, user_id]
+        await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)',
+            [board_id, user_id, 'editor']
         );
 
         const [newCol] = await connection.query('SELECT * FROM board_user WHERE board_id = ? AND user_id = ?',
             [board_id, user_id]
-        )
+        );
+
+        const [board] = await connection.query('SELECT board_title FROM board WHERE board_id = ?',
+            [board_id]
+        );
+
+        const actor = await messageHandler.getUser(req.session.user.user_id);
+
+        req.mail = {
+            user_id, title: "Board Invitation", message: `${actor.user_name} added you to the board "${board[0].board_title}".`
+        };
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'board-member-added', { board_id, user: newCol[0] });
         res.json({ message: "User Successfully Added to Board!", user: newCol[0] });
-    } finally { if (connection) await connection.release() }
+    } finally {
+        if (connection) await connection.release();
+    }
 });
 
 //UPDATE
@@ -213,6 +228,8 @@ exports.modifyBoardMember = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'board-member-updated', { board_id, user: newCol[0] });
         res.json({ message: "User's Access was Changed!", users: newCol });
     } finally { if (connection) await connection.release() }
 })
@@ -243,6 +260,8 @@ exports.removeBoardMember = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'board-member-removed', { board_id, user_id });
         res.json({ message: "User was Revoked Access from Board!", users: newCol });
     } finally { if (connection) await connection.release() }
 });
@@ -278,19 +297,28 @@ exports.addCardMember = catchAsync(async (req, res) => {
             return res.status(403).json({ message: "User is Already a Member of this Card!" });
         }
 
-        await connection.query(
-            'INSERT INTO card_member (card_id, user_id) VALUES (?, ?)',
+        await connection.query('INSERT INTO card_member (card_id, user_id) VALUES (?, ?)',
             [card_id, user_id]
         );
 
         const actor = await messageHandler.getUser(req.session.user.user_id);
         const target = await messageHandler.getUser(user_id);
 
+        const [card] = await connection.query('SELECT card_name FROM card WHERE card_id = ?',
+            [card_id]
+        );
+
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
             [actor.user_id, board_id, card_id, 'JOINED_CARD', JSON.stringify({ user: target.user_name })]
         )
 
+        req.mail = {
+            user_id, title: "Added to a card", message: `${actor.user_name} added you to card "${card[0].card_name}".`
+        };
+
         await connection.commit();
+
+        emit.toBoard(board_id, 'card-member-added', { card_id, user_id });
         res.json({ message: "User was Added to Card Members" });
     } finally {
         if (connection) await connection.release();
@@ -325,6 +353,8 @@ exports.removeCardMember = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'card-member-removed', { card_id, user_id });
         return res.json({ message: "User was Removed from Card" })
     } finally { if (connection) await connection.release() }
 });
@@ -384,7 +414,13 @@ exports.assignMember = catchAsync(async (req, res) => {
             [actor.user_id, board_id, card_id, 'ASSIGNED_ITEM', JSON.stringify({ user: target.user_name, item: getItem[0].item_text, actor: actorName })]
         )
 
+        req.mail = {
+            user_id, title: "Checklist assigned", message: `You were assigned "${getItem[0].item_text}".`,
+        };
+
         await connection.commit();
+
+        emit.toBoard(board_id, 'checklist-assigned', { card_id, item_id, user_id });
         res.json({ message: "User Successfully Assigned to Checklist!" });
     } finally {
         if (connection) await connection.release();
@@ -438,6 +474,7 @@ exports.unassignMember = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.toBoard(board_id, 'checklist-unassigned', { card_id, item_id, user_id });
         res.json({ message: "User was Unassigned from checklist!" });
     } finally {
         if (connection) await connection.release();
@@ -469,6 +506,8 @@ exports.publishComment = catchAsync(async (req, res) => {
         )
 
         await connection.commit();
+
+        emit.toBoard(board_id, 'comment-added', { card_id, comment });
         res.json({ message: "Comment Successful!" });
     } finally { if (connection) await connection.release() }
 })
@@ -500,6 +539,8 @@ exports.editComment = catchAsync(async (req, res) => {
         await connection.commit();
 
         res.json({ message: "Comment Changed!" });
+
+        emit.toBoard(board_id, 'comment-updated', { comment_id, description });
     } finally { if (connection) await connection.release() }
 })
 
@@ -529,6 +570,7 @@ exports.deleteComment = catchAsync(async (req, res) => {
 
         await connection.commit();
 
+        emit.toBoard(board_id, 'comment-deleted', { comment_id });
         res.json({ message: "Comment Deleted!" });
     } finally { if (connection) await connection.release() }
 })

@@ -27,22 +27,22 @@ module.exports = async (req, res, next) => {
         }
         //FROM item_id
         else if (req.params.checklistItem_id || req.params.item_id) {
-            query = 'SELECT 1 FROM checklist_item AS ci JOIN checklist AS ch ON ci.checklist_id = ch.checklist_id JOIN card AS c ON ch.card_id = c.card_id JOIN list AS l ON c.list_id = l.list_id JOIN board_user AS bv ON l.board_id = bv.board_id WHERE ci.checklistItem_id = ? AND bv.user_id = ? LIMIT 1';
-            params = [req.params.checklistItem_id || req.params.item_id, userId];
+            query = 'SELECT 1 FROM checklist_items AS ci JOIN checklist AS ch ON ci.checklist_id = ch.checklist_id JOIN card AS c ON ch.card_id = c.card_id JOIN list AS l ON c.list_id = l.list_id JOIN board_user AS bv ON l.board_id = bv.board_id WHERE ci.item_id = ? AND bv.user_id = ? LIMIT 1';
+            params = [req.params.item_id || req.params.item_id, userId];
         }
         else {
-            return res.status(400).json({ message: "Resource identifier not found" });
+            return res.status(400).json({ message: "Resource identifier not found!" });
         }
 
         const [result] = await db.query(query, params);
 
         if (result.length === 0) {
-            return res.status(403).json({ message: "Unauthorized Action: User is not a Member" });
+            return res.status(403).json({ message: "Unauthorized Action: User is not a Member!" });
         }
 
         next();
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ message: "Authorization Check Failed", error: err.message });
+        return res.status(500).json({ message: "Authorization Check Failed.", error: err.message });
     }
 };

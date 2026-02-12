@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 })
 
 const fileFilter = (req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png)$/;;
+    const allowed = /\.(jpg|jpeg|png)$/;
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (allowed.test(ext)) cb(null, true);
