@@ -158,6 +158,18 @@ const Dashboard = () => {
     fontSize: "0.85rem",
   };
 
+  // Workspace action button styles
+  const workspaceButtonStyle = {
+    backgroundColor: "#282e33",
+    border: "1px solid #3d444d",
+    color: "#9fadbc",
+    fontSize: "0.8rem",
+    padding: "6px 14px",
+    borderRadius: "4px",
+    fontWeight: "500",
+    transition: "all 0.2s",
+  };
+
   return (
     <>
       <style>{`
@@ -328,13 +340,20 @@ const Dashboard = () => {
   line-height: 1.4;
 }
 
-        .color-swatch-enhanced {
-          transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+/* Modal styling */
+.create-board-modal {
+  background-color: #282e33 !important;
+  border: 1px solid #454f59;
+}
 
-        .color-swatch-enhanced:hover {
-          transform: scale(1.05);
-        }
+.create-board-modal .modal-header {
+  background-color: #282e33;
+  border-bottom: 1px solid #454f59;
+}
+
+.create-board-modal .modal-body {
+  background-color: #282e33;
+}
 
       `}</style>
 
@@ -618,7 +637,7 @@ const Dashboard = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-0">
-          {/* Enhanced Preview with Image Overlay */}
+          
           <div
             className="position-relative mb-4 overflow-hidden"
             style={{
@@ -927,7 +946,6 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Closed Boards Modal */}
       <Modal
         show={showClosedModal}
         onHide={handleCloseClosedModal}
@@ -971,7 +989,6 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Apps Overlay */}
       <Overlay
         target={target.current}
         show={showOverlay}
@@ -980,34 +997,32 @@ const Dashboard = () => {
         onHide={() => setShowOverlay(false)}
       >
         {({ placement, arrowProps, show: _show, popper, ...props }) => (
-          <div {...props} className="apps-dropdown p-4 text-light">
-            <div className="d-grid gap-2">
-              <Button
-                variant="dark"
-                className="text-start d-flex align-items-center gap-2 border-secondary"
-                onClick={() => navigate('/home')}
-              >
-                <i className="bi bi-house-door-fill"></i> Home
-              </Button>
-              <Button
-                variant="dark"
-                className="text-start d-flex align-items-center gap-2 border-secondary"
-              >
-                <i className="bi bi-person-badge-fill"></i> Admin Panel
-              </Button>
-              <Button
-                variant="dark"
-                className="text-start d-flex align-items-center gap-2 border-secondary"
-                onClick={() => navigate('/boards')}
-              >
-                <i className="bi bi-columns-gap"></i> Boards
-              </Button>
-            </div>
-          </div>
-        )}
-      </Overlay>
-    </>
-  );
-};
+                 <div {...props} className="apps-dropdown p-4 text-light">
+                   <div className="d-grid gap-2">
+                     <Button
+                       variant="dark"
+                       className="text-start d-flex align-items-center gap-2 border-secondary"
+                     >
+                       <i className="bi bi-house-door-fill"></i> Home
+                     </Button>
+                     <Button
+                       variant="dark"
+                       className="text-start d-flex align-items-center gap-2 border-secondary"
+                     >
+                       <i className="bi bi-person-badge-fill"></i> Admin Panel
+                     </Button>
+                     <Button
+                       variant="dark"
+                       className="text-start d-flex align-items-center gap-2 border-secondary"
+                     >
+                       <i className="bi bi-columns-gap"></i> Boards
+                     </Button>
+                   </div>
+                 </div>
+               )}
+             </Overlay>
+           </>
+         );
+       };
 
 export default Dashboard;

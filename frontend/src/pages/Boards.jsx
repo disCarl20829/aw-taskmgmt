@@ -14,7 +14,7 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink, Link, } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 
 const Boards = () => {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -26,7 +26,7 @@ const Boards = () => {
   const [selectedVisibility, setSelectedVisibility] = useState({
     title: "Workspace",
     icon: "bi-people",
-    desc: "All members of the Animatewell Workspace can see and edit this board."
+    desc: "All members of the Animatewell Workspace can see and edit this board.",
   });
 
   const handleCloseModal = () => setShowModal(false);
@@ -45,7 +45,12 @@ const Boards = () => {
         className="d-flex justify-content-between align-items-center"
       >
         Notifications
-        <Form.Check type="switch" id="notif-switch" className="custom-switch" defaultChecked />
+        <Form.Check
+          type="switch"
+          id="notif-switch"
+          className="custom-switch"
+          defaultChecked
+        />
       </Popover.Header>
       <Popover.Body className="text-center">
         No unread notification
@@ -67,15 +72,39 @@ const Boards = () => {
           </div>
         </div>
         <ListGroup variant="flush" className="account-list">
-          <ListGroup.Item action as={Link} to="/profile" className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/profile"
+            className="bg-dark text-light border-secondary"
+          >
             Profile and visibility
           </ListGroup.Item>
-          <ListGroup.Item action className="bg-dark text-light border-secondary">Activity</ListGroup.Item>
-          <ListGroup.Item action className="bg-dark text-light border-secondary">Card</ListGroup.Item>
-          <ListGroup.Item action as={Link} to="/settings" className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            className="bg-dark text-light border-secondary"
+          >
+            Activity
+          </ListGroup.Item>
+          <ListGroup.Item
+            action
+            className="bg-dark text-light border-secondary"
+          >
+            Card
+          </ListGroup.Item>
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/settings"
+            className="bg-dark text-light border-secondary"
+          >
             Settings
           </ListGroup.Item>
-          <ListGroup.Item action onClick={handleLogout} className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            onClick={handleLogout}
+            className="bg-dark text-light border-secondary"
+          >
             Log out
           </ListGroup.Item>
         </ListGroup>
@@ -275,29 +304,54 @@ const Boards = () => {
               onClick={() => setShowOverlay(!showOverlay)}
               className="p-0 me-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#f1f1f1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="26px"
+                viewBox="0 -960 960 960"
+                width="26px"
+                fill="#f1f1f1"
+              >
                 <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
               </svg>
             </Button>
 
-            <NavLink to="/boards" className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center">
-              <i className="bi bi-columns-gap" style={{ fontSize: "18px", color: "#1d2125" }}></i>
+            <NavLink
+              to="/boards"
+              className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
+            >
+              <i
+                className="bi bi-columns-gap"
+                style={{ fontSize: "18px", color: "#1d2125" }}
+              ></i>
             </NavLink>
           </div>
 
           {/* CENTER SECTION */}
           <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
-            <Form.Group className="mb-0 custom-search" style={{ maxWidth: "865px", width: "100%" }}>
+            <Form.Group
+              className="mb-0 custom-search"
+              style={{ maxWidth: "865px", width: "100%" }}
+            >
               <div className="input-group">
                 <span className="input-group-text bg-dark border-secondary">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="#9ea3ac" viewBox="0 0 16 16">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    fill="#9ea3ac"
+                    viewBox="0 0 16 16"
+                  >
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
                   </svg>
                 </span>
-                <Form.Control type="search" placeholder="Search" className="bg-dark text-light border-secondary" />
+                <Form.Control
+                  type="search"
+                  placeholder="Search"
+                  className="bg-dark text-light border-secondary"
+                />
               </div>
             </Form.Group>
-            
+
             <Button
               variant="primary"
               size="sm"
@@ -310,15 +364,36 @@ const Boards = () => {
 
           {/* RIGHT SECTION */}
           <Nav className="ms-0 align-items-center gap-3">
-            <OverlayTrigger trigger="click" placement="bottom" overlay={notificationPopover} rootClose>
+            <OverlayTrigger
+              trigger="click"
+              placement="bottom"
+              overlay={notificationPopover}
+              rootClose
+            >
               <Button variant="link" className="p-0 text-light">
-                <svg xmlns="http://www.w3.org/2000/svg" height="25px" viewBox="0 -960 960 960" width="25px" fill="#f1f1f1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="25px"
+                  viewBox="0 -960 960 960"
+                  width="25px"
+                  fill="#f1f1f1"
+                >
                   <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
                 </svg>
               </Button>
             </OverlayTrigger>
-            <OverlayTrigger trigger="click" placement="bottom" overlay={accountPopover} rootClose>
-              <div className="avatar-circle bg-info" style={{ cursor: "pointer" }}>U</div>
+            <OverlayTrigger
+              trigger="click"
+              placement="bottom"
+              overlay={accountPopover}
+              rootClose
+            >
+              <div
+                className="avatar-circle bg-info"
+                style={{ cursor: "pointer" }}
+              >
+                U
+              </div>
             </OverlayTrigger>
           </Nav>
         </Navbar>
@@ -328,78 +403,144 @@ const Boards = () => {
           <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
             <section className="mb-4">
               <div className="d-flex flex-column gap-1 mt-3">
-                <button className="sidebar-btn-link text-start">
+                <Link
+                  to="/dashboard"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-columns-gap me-2"></i>Boards
-                </button>
-                <button className="sidebar-btn-link text-start">
+                </Link>
+                <Link
+                  to="/home"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-activity me-2"></i>Home
-                </button>
+                </Link>
               </div>
             </section>
 
             <section>
               <h6 className="sidebar-heading px-2">Workspaces</h6>
-              <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+              <div className="d-flex align-items-center mt-3 mb-2 w-100 text-start px-2">
                 <span className="workspace-icon me-2">A</span>
-                <span className="fw-bold">Animate Workspace</span>
-              </button>
+                <span className="fw-bold" style={{ color: "#9fadbc" }}>
+                  Animate Workspace
+                </span>
+              </div>
               <div className="d-flex flex-column gap-1 ps-4">
                 <button className="sidebar-btn-link text-start active">
                   <i className="bi bi-kanban me-2"></i> Boards
                 </button>
-                <button className="sidebar-btn-link text-start">
+                <Link
+                  to="/members"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-people me-2"></i> Members
-                </button>
-                <button className="sidebar-btn-link text-start">
+                </Link>
+                <Link
+                  to="/settings"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-gear me-2"></i> Settings
-                </button>
+                </Link>
               </div>
             </section>
           </nav>
 
           {/* MAIN CONTENT */}
-          <Container fluid className="content-area p-4" style={{ maxWidth: "1200px" }}>
+          <Container
+            fluid
+            className="content-area p-4"
+            style={{ maxWidth: "1200px" }}
+          >
             <section className="mb-4">
               {!isEditing ? (
                 <div className="d-flex align-items-start gap-3 mb-4">
                   <div className="workspace-icon-lg">A</div>
                   <div>
                     <div className="d-flex align-items-center gap-2">
-                      <h5 className="text-light mb-0 fw-bold" style={{ fontSize: "1.1rem" }}>
+                      <h5
+                        className="text-light mb-0 fw-bold"
+                        style={{ fontSize: "1.1rem" }}
+                      >
                         Animate Workspace
                       </h5>
                       <button
                         className="btn p-0"
-                        style={{ color: "#9fadbc", background: "none", border: "none" }}
+                        style={{
+                          color: "#9fadbc",
+                          background: "none",
+                          border: "none",
+                        }}
                         onClick={() => setIsEditing(true)}
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                       </button>
                     </div>
-                    <div className="text-secondary" style={{ fontSize: "0.8rem" }}>Premium • Private</div>
+                    <div
+                      className="text-secondary"
+                      style={{ fontSize: "0.8rem" }}
+                    >
+                      Premium • Private
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div style={{ maxWidth: "500px" }} className="mb-4">
                   <Form>
                     <Form.Group className="mb-2">
-                      <Form.Label className="small fw-bold text-light">Name <span className="text-danger">*</span></Form.Label>
-                      <Form.Control type="text" className="bg-dark text-light border-secondary" defaultValue="Animate Workspace" />
+                      <Form.Label className="small fw-bold text-light">
+                        Name <span className="text-danger">*</span>
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        className="bg-dark text-light border-secondary"
+                        defaultValue="Animate Workspace"
+                      />
                     </Form.Group>
                     <Form.Group className="mb-2">
-                      <Form.Label className="small fw-bold text-light">Email <span className="text-danger">*</span></Form.Label>
-                      <Form.Control type="email" className="bg-dark text-light border-secondary" />
+                      <Form.Label className="small fw-bold text-light">
+                        Email <span className="text-danger">*</span>
+                      </Form.Label>
+                      <Form.Control
+                        type="email"
+                        className="bg-dark text-light border-secondary"
+                      />
                     </Form.Group>
                     <Form.Group className="mb-3">
-                      <Form.Label className="small fw-bold text-light">Description (optional)</Form.Label>
-                      <Form.Control as="textarea" rows={2} className="bg-dark text-light border-secondary" />
+                      <Form.Label className="small fw-bold text-light">
+                        Description (optional)
+                      </Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        className="bg-dark text-light border-secondary"
+                      />
                     </Form.Group>
                     <div className="d-flex gap-2">
-                      <Button variant="primary" size="sm" onClick={() => setIsEditing(false)}>Save</Button>
-                      <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </Form>
                 </div>
@@ -409,8 +550,22 @@ const Boards = () => {
             </section>
 
             <section>
-              <div className="d-flex align-items-center gap-2 mb-3" style={{ color: "#9fadbc", fontSize: "0.8rem", fontWeight: 600 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div
+                className="d-flex align-items-center gap-2 mb-3"
+                style={{
+                  color: "#9fadbc",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -418,7 +573,10 @@ const Boards = () => {
               </div>
 
               <div className="d-flex flex-wrap gap-2">
-                <div style={boardTileGradientStyle} className="board-tile-hover">
+                <div
+                  style={boardTileGradientStyle}
+                  className="board-tile-hover"
+                >
                   <div style={boardTitleOverlayStyle}>My board</div>
                 </div>
                 <div
@@ -440,7 +598,11 @@ const Boards = () => {
         centered
         contentClassName="create-board-modal"
       >
-        <Modal.Header closeButton closeVariant="white" className="border-0 pb-2">
+        <Modal.Header
+          closeButton
+          closeVariant="white"
+          className="border-0 pb-2"
+        >
           <Modal.Title className="fs-6 w-100 text-center text-light">
             Create board
           </Modal.Title>
@@ -455,7 +617,7 @@ const Boards = () => {
               borderRadius: "8px",
               backgroundImage: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor}dd 100%)`,
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
             }}
           >
             <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center">
@@ -487,7 +649,7 @@ const Boards = () => {
                   { color: "#89609e", name: "Royal Purple" },
                   { color: "#cd5a91", name: "Pink Rose" },
                   { color: "#00aacc", name: "Cyan" },
-                  { color: "#ff6b6b", name: "Coral" }
+                  { color: "#ff6b6b", name: "Coral" },
                 ].map(({ color, name }) => (
                   <div
                     key={color}
@@ -502,26 +664,31 @@ const Boards = () => {
                         height: "36px",
                         borderRadius: "6px",
                         cursor: "pointer",
-                        border: selectedColor === color
-                          ? "3px solid white"
-                          : "2px solid rgba(255,255,255,0.1)",
-                        transform: selectedColor === color ? "scale(1.1)" : "scale(1)",
+                        border:
+                          selectedColor === color
+                            ? "3px solid white"
+                            : "2px solid rgba(255,255,255,0.1)",
+                        transform:
+                          selectedColor === color ? "scale(1.1)" : "scale(1)",
                         transition: "all 0.2s ease",
-                        boxShadow: selectedColor === color
-                          ? "0 4px 12px rgba(0,0,0,0.4)"
-                          : "0 2px 4px rgba(0,0,0,0.2)"
+                        boxShadow:
+                          selectedColor === color
+                            ? "0 4px 12px rgba(0,0,0,0.4)"
+                            : "0 2px 4px rgba(0,0,0,0.2)",
                       }}
                       onClick={() => setSelectedColor(color)}
                       onMouseEnter={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1.05)";
-                          e.target.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                          e.target.style.boxShadow =
+                            "0 3px 8px rgba(0,0,0,0.3)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1)";
-                          e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+                          e.target.style.boxShadow =
+                            "0 2px 4px rgba(0,0,0,0.2)";
                         }
                       }}
                     >
@@ -563,11 +730,12 @@ const Boards = () => {
                       cursor: "pointer",
                       position: "relative",
                       overflow: "hidden",
-                      transition: "all 0.2s ease"
+                      transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                      e.currentTarget.style.boxShadow =
+                        "0 3px 8px rgba(0,0,0,0.3)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scale(1)";
@@ -578,7 +746,7 @@ const Boards = () => {
                       className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
                       style={{
                         backgroundColor: "rgba(0,0,0,0.4)",
-                        backdropFilter: "blur(2px)"
+                        backdropFilter: "blur(2px)",
                       }}
                     >
                       <svg
@@ -601,7 +769,7 @@ const Boards = () => {
                       position: "absolute",
                       opacity: 0,
                       width: "0",
-                      height: "0"
+                      height: "0",
                     }}
                   />
                 </div>
@@ -612,7 +780,7 @@ const Boards = () => {
                 className="d-flex align-items-center gap-2 p-2 rounded"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)"
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 <div
@@ -621,11 +789,14 @@ const Boards = () => {
                     height: "24px",
                     backgroundColor: selectedColor,
                     borderRadius: "4px",
-                    border: "2px solid rgba(255,255,255,0.2)"
+                    border: "2px solid rgba(255,255,255,0.2)",
                   }}
                 ></div>
                 <span className="text-light small">
-                  Selected: <span className="text-secondary">{selectedColor.toUpperCase()}</span>
+                  Selected:{" "}
+                  <span className="text-secondary">
+                    {selectedColor.toUpperCase()}
+                  </span>
                 </span>
               </div>
             </Form.Group>
@@ -640,7 +811,7 @@ const Boards = () => {
                 className="bg-dark text-light border-secondary"
                 style={{
                   fontSize: "14px",
-                  padding: "10px 12px"
+                  padding: "10px 12px",
                 }}
               />
               <Form.Text className="text-muted small">
@@ -649,7 +820,9 @@ const Boards = () => {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-light">Visibility</Form.Label>
+              <Form.Label className="small fw-bold text-light">
+                Visibility
+              </Form.Label>
               <Dropdown className="visibility-dropdown">
                 <Dropdown.Toggle variant="dark" id="dropdown-visibility">
                   <span>
@@ -663,16 +836,21 @@ const Boards = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setSelectedVisibility({
-                      title: "Private",
-                      icon: "bi-lock",
-                      desc: "Board members and Animatewell Workspace admin can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setSelectedVisibility({
+                        title: "Private",
+                        icon: "bi-lock",
+                        desc: "Board members and Animatewell Workspace admin can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-lock fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Private</span>
-                      <span className="desc">Board members and Animatewell Workspace admin can see and edit this board.</span>
+                      <span className="desc">
+                        Board members and Animatewell Workspace admin can see
+                        and edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -680,16 +858,21 @@ const Boards = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setSelectedVisibility({
-                      title: "Workspace",
-                      icon: "bi-people",
-                      desc: "All members of the Animatewell Workspace can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setSelectedVisibility({
+                        title: "Workspace",
+                        icon: "bi-people",
+                        desc: "All members of the Animatewell Workspace can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-people fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Workspace</span>
-                      <span className="desc">All members of the Animatewell Workspace can see and edit this board.</span>
+                      <span className="desc">
+                        All members of the Animatewell Workspace can see and
+                        edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -697,16 +880,21 @@ const Boards = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setSelectedVisibility({
-                      title: "Public",
-                      icon: "bi-globe",
-                      desc: "Anyone on the internet can see this board. Only board members can edit."
-                    })}
+                    onClick={() =>
+                      setSelectedVisibility({
+                        title: "Public",
+                        icon: "bi-globe",
+                        desc: "Anyone on the internet can see this board. Only board members can edit.",
+                      })
+                    }
                   >
                     <i className="bi bi-globe fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Public</span>
-                      <span className="desc">Anyone on the internet can see this board. Only board members can edit.</span>
+                      <span className="desc">
+                        Anyone on the internet can see this board. Only board
+                        members can edit.
+                      </span>
                     </div>
                   </Dropdown.Item>
                 </Dropdown.Menu>
@@ -719,7 +907,7 @@ const Boards = () => {
               style={{
                 fontSize: "14px",
                 borderRadius: "6px",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
               }}
               disabled
             >
@@ -730,39 +918,76 @@ const Boards = () => {
       </Modal>
 
       {/* Closed Boards Modal */}
-      <Modal show={showClosedModal} onHide={handleCloseClosedModal} centered size="lg" contentClassName="closed-boards-modal bg-dark text-light border-secondary">
-        <Modal.Header closeButton closeVariant="white" className="border-secondary">
+      <Modal
+        show={showClosedModal}
+        onHide={handleCloseClosedModal}
+        centered
+        size="lg"
+        contentClassName="closed-boards-modal bg-dark text-light border-secondary"
+      >
+        <Modal.Header
+          closeButton
+          closeVariant="white"
+          className="border-secondary"
+        >
           <Modal.Title className="fs-6 d-flex align-items-center w-100">
             <span className="d-flex align-items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+              >
                 <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM5 4h6v9H5z" />
               </svg>
               Closed boards
             </span>
-            <Form.Select size="sm" className="ms-3 bg-dark text-light border-secondary w-auto">
+            <Form.Select
+              size="sm"
+              className="ms-3 bg-dark text-light border-secondary w-auto"
+            >
               <option>All boards</option>
             </Form.Select>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-4">
-          <div className="closed-boards-placeholder text-center py-4 rounded" style={{ backgroundColor: "#9ea3ac", color: "#1d2125" }}>
+          <div
+            className="closed-boards-placeholder text-center py-4 rounded"
+            style={{ backgroundColor: "#9ea3ac", color: "#1d2125" }}
+          >
             No boards have been closed
           </div>
         </Modal.Body>
       </Modal>
 
       {/* Apps Overlay */}
-      <Overlay target={target.current} show={showOverlay} placement="bottom-start" rootClose={true} onHide={() => setShowOverlay(false)}>
+      <Overlay
+        target={target.current}
+        show={showOverlay}
+        placement="bottom-start"
+        rootClose={true}
+        onHide={() => setShowOverlay(false)}
+      >
         {({ placement, arrowProps, show: _show, popper, ...props }) => (
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
-              <Button variant="dark" className="text-start d-flex align-items-center gap-2 border-secondary">
+              <Button
+                variant="dark"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
+              >
                 <i className="bi bi-house-door-fill"></i> Home
               </Button>
-              <Button variant="dark" className="text-start d-flex align-items-center gap-2 border-secondary">
+              <Button
+                variant="dark"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
+              >
                 <i className="bi bi-person-badge-fill"></i> Admin Panel
               </Button>
-              <Button variant="dark" className="text-start d-flex align-items-center gap-2 border-secondary">
+              <Button
+                variant="dark"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
+              >
                 <i className="bi bi-columns-gap"></i> Boards
               </Button>
             </div>
