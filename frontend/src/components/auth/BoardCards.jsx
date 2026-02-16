@@ -1,0 +1,106 @@
+import React, { useState, useEffect } from "react";
+
+import api from '../../config/api';
+
+const BoardCards = ({ colors }) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+
+  const theme = colors || {
+    listGrey: "#f3f4f6",
+    accentGreen: "#10b981",
+    dangerRed: "#fee2e2",
+    textRed: "#991b1b",
+  };
+
+  async function listTemplate(list, listIdx) {
+    <div
+      key={list.id}
+      className="kanban-list p-2 rounded shadow-sm"
+      style={{
+        backgroundColor: list.color || theme.listGrey,
+        minWidth: "280px",
+      }}
+    >
+      {/* List Header with Delete List Option */}
+      <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+        <input
+          className="fw-bold small border-0 bg-transparent w-75"
+          value={list.title}
+          readOnly // Change to handleTitleChange if you have a PATCH route
+        />
+        <button
+          onClick={() => deleteList(list.id)}
+          className="btn btn-sm border-0 text-secondary"
+          title="Delete List"
+        >
+          &times;
+        </button>
+      </div>
+
+      {/* Cards */}
+      {list.cards.map((card) => (
+        <div
+          key={card.id}
+          className="bg-white rounded p-2 mb-2 shadow-sm d-flex justify-content-between align-items-center group"
+        >
+          <div className="d-flex align-items-center gap-2">
+            <input type="checkbox" checked={card.completed} readOnly />
+            <span className="small text-dark">{card.text}</span>
+          </div>
+
+          {/* Delete Card Button */}
+          <button
+            onClick={() => deleteCard(listIdx, card.id)}
+            className="btn btn-sm p-0 border-0 text-danger opacity-50"
+            style={{ fontSize: "16px" }}
+          >
+            &minus;
+          </button>
+        </div>
+      ))}
+
+      <button className="btn btn-sm w-100 text-start p-1 border-0 text-secondary">
+        + Add card
+      </button>
+    </div>;
+  }
+
+  // 1. FETCH DATA FROM DATABASE ON LOAD
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get("tasks/lists/1"); // Replace with your URL
+        const result = await res.json();
+        setData(result.lists);
+      } catch (err) {
+        console.error("Error loading board:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-5 text-center">Loading Board...</div>;
+
+  return (
+    <div
+      className="kanban-scroll-container d-flex gap-3 p-3"
+      style={{ overflowX: "auto" }}
+    >
+      {data.map((list, listIdx) => listTemplate(list, listIdx))}
+
+      <button
+        onClick={listTemplate(1, 1)}
+        className="kanban-list p-3 rounded border-0 text-center shadow-sm"
+        style={{ backgroundColor: theme.listGrey, minWidth: "280px" }}
+      >
+        <span className="fw-bold small">+ Add list</span>
+      </button>
+    </div>
+  );
+};
+
+export default BoardCards;

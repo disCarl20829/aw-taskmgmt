@@ -573,7 +573,7 @@ const BoardButton = () => {
                       </span>
                     </div>
                   </Dropdown.Item>
-                </Dropdown.Menu>
+                </Dropdown.Menu>``
               </Dropdown>
             </Form.Group>
 
