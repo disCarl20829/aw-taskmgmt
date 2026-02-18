@@ -1,4 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+
 import {
   Navbar,
   Nav,
@@ -14,21 +16,29 @@ import {
   Modal,
   Dropdown,
 } from "react-bootstrap";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink, Link } from "react-router-dom";
+
+import api from "../config/api";
+import BoardTemplate from "../components/BoardTemplate";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#0079bf");
   const [visibility, setVisibility] = useState({
-    title: "Workspace",
+    title: "Public",
     icon: "bi-people",
-    desc: "All members of the Animatewell Workspace can see and edit this board.",
+    desc: "All members of the workspace can see and edit this board.",
   });
   const [showModal, setShowModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
+
+  const [user, setUser] = useState(null);
+  const [boards, setBoards] = useState([]);
+  const [boardTitle, setBoardTitle] = useState("");
+
   const target = useRef(null);
 
   const handleCloseModal = () => setShowModal(false);
@@ -37,12 +47,70 @@ const Dashboard = () => {
   const handleCloseClosedModal = () => setShowClosedModal(false);
   const handleShowClosedModal = () => setShowClosedModal(true);
 
-  const handleLogout = () => {
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    try {
+      const res = await api.post("/auth/signout");
+      alert(res.data.message);
+      navigate("/signin", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
+  const handleCreateBoard = async () => {
+    try {
+      const res = await api.post("/tasks/boards", {
+        board_title: boardTitle,
+        board_background: selectedColor,
+        board_visibility: visibility.title.toLowerCase(),
+      });
+
+      setBoards((prev) => [...prev, res.data.board]);
+
+      setBoardTitle("");
+      setSelectedColor("#0079bf");
+      setVisibility({
+        title: "Public",
+        icon: "bi-people",
+        desc: "All members of the workspace can see and edit this board.",
+      });
+
+      setShowModal(false);
+    } catch (err) {
+      console.error("Create board failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const res = await api.get("/auth/check");
+        setUser(res.data.user);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          navigate("/signin", { replace: true });
+        }
+      }
+    };
+
+    getUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const res = await api.get("/tasks/boards");
+        setBoards(res.data.boards);
+      } catch (err) {
+        console.error("Failed to fetch boards:", err);
+      }
+    };
+
+    fetchBoards();
+  }, []);
+
   const notificationPopover = (
-    <Popover id="popover-notifications" className="custom-popover">
+    <Popover id="popover-notifications" className="trello-popover">
       <Popover.Header
         as="h3"
         className="d-flex justify-content-between align-items-center"
@@ -62,18 +130,34 @@ const Dashboard = () => {
   );
 
   const accountPopover = (
-    <Popover id="popover-account" className="custom-popover account-width">
+    <Popover id="popover-account" className="trello-popover account-width">
       <Popover.Header className="text-secondary small bg-dark border-secondary">
         Account
       </Popover.Header>
       <Popover.Body className="p-0 bg-dark">
         <div className="d-flex align-items-center p-3 gap-2">
-          <div className="avatar-circle bg-info">U</div>
+          {/* AVATAR: Pulls first letter of email or name */}
+          <div
+            className="avatar-circle bg-info text-white d-flex align-items-center justify-content-center"
+            style={{ width: "40px", height: "40px", borderRadius: "50%" }}
+          >
+            {user?.user_name ? user.user_name.charAt(0).toUpperCase() : "G"}
+          </div>
+
           <div>
-            <div className="fw-bold text-light">User123</div>
-            <div className="text-secondary small">@user123</div>
+            {/* USERNAME: Displays user_name from your DB */}
+            <div className="fw-bold text-light">
+              {user?.user_name || "Guest User"}
+            </div>
+            {/* EMAIL: Displays user_email from your DB */}
+            <div className="text-secondary small">
+              {user?.user_email || "Not signed in"}
+            </div>
           </div>
         </div>
+        <hr className="m-0 border-secondary" />
+        {/* Add a Logout button here to clear the session */}
+
         <ListGroup variant="flush" className="account-list">
           <ListGroup.Item
             action
@@ -83,7 +167,6 @@ const Dashboard = () => {
           >
             Profile and visibility
           </ListGroup.Item>
-
           <ListGroup.Item
             action
             as={Link}
@@ -92,7 +175,6 @@ const Dashboard = () => {
           >
             Activity
           </ListGroup.Item>
-
           <ListGroup.Item
             action
             as={Link}
@@ -101,7 +183,6 @@ const Dashboard = () => {
           >
             Card
           </ListGroup.Item>
-
           <ListGroup.Item
             action
             as={Link}
@@ -110,7 +191,6 @@ const Dashboard = () => {
           >
             Settings
           </ListGroup.Item>
-
           <ListGroup.Item
             action
             onClick={handleLogout}
@@ -162,65 +242,265 @@ const Dashboard = () => {
     fontSize: "0.85rem",
   };
 
+  // Workspace action button styles
+  const workspaceButtonStyle = {
+    backgroundColor: "#282e33",
+    border: "1px solid #3d444d",
+    color: "#9fadbc",
+    fontSize: "0.8rem",
+    padding: "6px 14px",
+    borderRadius: "4px",
+    fontWeight: "500",
+    transition: "all 0.2s",
+  };
+
   return (
-    <div className="app-container">
-      <Navbar
-        variant="dark"
-        className="app-nav border-bottom border-secondary px-3 d-flex justify-content-between"
-      >
-        <div className="d-flex align-items-center gap-1">
-          <Button
-            variant="link"
-            ref={target}
-            onClick={() => setShowOverlay(!showOverlay)}
-            className="p-0 me-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="26px"
-              viewBox="0 -960 960 960"
-              width="26px"
-              fill="#f1f1f1"
+    <>
+      <style>{`
+        .bg-dark-main { background-color: #1d2125; }
+
+        .sidebar {
+          width: 260px;
+          background-color: #1d2125;
+        }
+
+        .sidebar-heading {
+          color: #a8b4c1;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .sidebar-btn-link {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 6px 12px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          transition: 0.2s;
+          width: 100%;
+          text-align: left;
+        }
+
+        .sidebar-btn-link:hover {
+          background-color: #333c44;
+          color: #fff;
+        }
+
+        .sidebar-btn-link.active {
+          background-color: #579dff29;
+          color: #579dff;
+          font-weight: 600;
+        }
+
+        .workspace-icon {
+          width: 24px;
+          height: 24px;
+          background: linear-gradient(#e2b203, #ff9f1a);
+          color: #1d2125;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 3px;
+          font-weight: bold;
+        }
+
+        .workspace-icon-lg {
+          width: 36px;
+          height: 36px;
+          background: linear-gradient(#e2b203, #ff9f1a);
+          color: #1d2125;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+          font-weight: bold;
+          font-size: 1.1rem;
+        }
+
+        .sidebar-workspace-btn {
+          background: none;
+          border: none;
+          color: #9fadbc;
+          padding: 4px 8px;
+        }
+
+        .section-heading {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #9fadbc;
+          font-size: 0.8rem;
+          font-weight: 600;
+          margin-bottom: 10px;
+        }
+
+        .content-area {
+          overflow-y: auto;
+          max-height: calc(100vh - 60px);
+        }
+
+        .board-tile-hover:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .create-new-hover:hover {
+          background-color: #333c44 !important;
+          transform: translateY(-2px);
+        }
+
+        .workspace-action-btn {
+          background-color: #282e33;
+          border: 1px solid #3d444d;
+          color: #9fadbc;
+          font-size: 0.8rem;
+          padding: 6px 14px;
+          border-radius: 4px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .workspace-action-btn:hover {
+          background-color: #333c44;
+          border-color: #4a5159;
+          color: #fff;
+        }
+
+        .workspace-action-btn:active {
+          background-color: #3d444d;
+        }
+
+        /* Custom Visibility Dropdown Styling */
+.visibility-dropdown .dropdown-toggle {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #22272b !important;
+  border: 1px solid #444c56 !important;
+  padding: 10px 12px;
+  color: #dee2e6 !important;
+}
+
+.visibility-dropdown .dropdown-menu {
+  background-color: #282e33;
+  border: 1px solid #454f59;
+  width: 100%;
+  min-width: 300px;
+  padding: 8px 0;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+.visibility-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #b6c2cf;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.visibility-item:hover {
+  background-color: #333c44 !important;
+  color: #fff !important;
+}
+
+.visibility-text .title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #deebff;
+  margin-bottom: 2px;
+}
+
+.visibility-text .desc {
+  display: block;
+  font-size: 0.8rem;
+  color: #9fadbc;
+  line-height: 1.4;
+}
+
+/* Modal styling */
+.create-board-modal {
+  background-color: #282e33 !important;
+  border: 1px solid #454f59;
+}
+
+.create-board-modal .modal-header {
+  background-color: #282e33;
+  border-bottom: 1px solid #454f59;
+}
+
+.create-board-modal .modal-body {
+  background-color: #282e33;
+}
+
+      `}</style>
+
+      <div className="app-container">
+        {/* NAVBAR */}
+        <Navbar
+          variant="dark"
+          className="trello-nav border-bottom border-secondary px-3 d-flex justify-content-between"
+        >
+          <div className="d-flex align-items-center gap-1">
+            <Button
+              variant="link"
+              ref={target}
+              onClick={() => setShowOverlay(!showOverlay)}
+              className="p-0 me-2"
             >
-              <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
-            </svg>
-          </Button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="26px"
+                viewBox="0 -960 960 960"
+                width="26px"
+                fill="#f1f1f1"
+              >
+                <path d="M336-552H216q-33 0-52.5-19.5T144-624v-120q0-33 19.5-52.5T216-816h120q33 0 52.5 19.5T408-744v120q0 33-19.5 52.5T336-552Zm-120-72h120v-120H216v120Zm120 480H216q-33 0-52.5-19.5T144-216v-120q0-33 19.5-52.5T216-408h120q33 0 52.5 19.5T408-336v120q0 33-19.5 52.5T336-144Zm-120-72h120v-120H216v120Zm528-336H624q-33 0-52.5-19.5T552-624v-120q0-33 19.5-52.5T624-816h120q33 0 52.5 19.5T816-744v120q0 33-19.5 52.5T744-552Zm-120-72h120v-120H624v120Zm120 480H624q-33 0-52.5-19.5T552-216v-120q0-33 19.5-52.5T624-408h120q33 0 52.5 19.5T816-336v120q0 33-19.5 52.5T744-144Zm-120-72h120v-120H624v120ZM336-624Zm0 288Zm288-288Zm0 288Z" />
+              </svg>
+            </Button>
 
-          <NavLink
-            to="/boards"
-            className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
-          >
-            <i
-              className="bi bi-columns-gap"
-              style={{ fontSize: "18px", color: "#000000" }}
-            ></i>
-          </NavLink>
-        </div>
+            <NavLink
+              to="/boards"
+              className="nav-icon-link custom-board-icon d-flex align-items-center justify-content-center"
+            >
+              <i
+                className="bi bi-columns-gap"
+                style={{ fontSize: "18px", color: "#1d2125" }}
+              ></i>
+            </NavLink>
+          </div>
 
-        <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
-          <Form.Group
-            className="mb-0 custom-search"
-            style={{ maxWidth: "865px", width: "100%" }}
-          >
-            <div className="input-group">
-              <span className="input-group-text bg-dark border-secondary">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  fill="#9ea3ac"
-                  viewBox="0 0 16 16"
-                >
-                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
-                </svg>
-              </span>
-              <Form.Control
-                type="search"
-                placeholder="Search"
-                className="bg-dark text-light border-secondary"
-              />
-            </div>
-          </Form.Group>
+          {/* CENTER SECTION: Search + Create Button */}
+          <div className="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
+            <Form.Group
+              className="mb-0 custom-search"
+              style={{ maxWidth: "865px", width: "100%" }}
+            >
+              <div className="input-group">
+                <span className="input-group-text bg-dark border-secondary">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    fill="#9ea3ac"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+                  </svg>
+                </span>
+                <Form.Control
+                  type="search"
+                  placeholder="Search"
+                  className="bg-dark text-light border-secondary"
+                />
+              </div>
+            </Form.Group>
 
             {/* DIRECT CREATE BUTTON */}
             <Button
@@ -233,25 +513,26 @@ const Dashboard = () => {
             </Button>
           </div>
 
-        <Nav className="ms-0 align-items-center gap-3">
-          <OverlayTrigger
-            trigger="click"
-            placement="bottom"
-            overlay={notificationPopover}
-            rootClose
-          >
-            <Button variant="link" className="p-0 text-light">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                height="25px"
-                viewBox="0 -960 960 960"
-                width="25px"
-                fill="#f1f1f1"
-              >
-                <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
-              </svg>
-            </Button>
-          </OverlayTrigger>
+          {/* RIGHT SECTION: Notifications + Avatar */}
+          <Nav className="ms-0 align-items-center gap-3">
+            <OverlayTrigger
+              trigger="click"
+              placement="bottom"
+              overlay={notificationPopover}
+              rootClose
+            >
+              <Button variant="link" className="p-0 text-light">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="25px"
+                  viewBox="0 -960 960 960"
+                  width="25px"
+                  fill="#f1f1f1"
+                >
+                  <path d="M160-200v-80h80v-280q0-83 50-147.5T420-792v-28q0-25 17.5-42.5T480-880q25 0 42.5 17.5T540-820v28q80 20 130 84.5T720-560v280h80v80H160Zm320-300Zm0 420q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-280h320v-280q0-66-47-113t-113-47q-66 0-113 47t-47 113v280Z" />
+                </svg>
+              </Button>
+            </OverlayTrigger>
 
             <OverlayTrigger
               trigger="click"
@@ -263,61 +544,31 @@ const Dashboard = () => {
                 className="avatar-circle bg-info"
                 style={{ cursor: "pointer" }}
               >
-                U
+                {user?.user_name ? user.user_name.charAt(0).toUpperCase() : "U"}
               </div>
             </OverlayTrigger>
           </Nav>
         </Navbar>
 
-      <div className="main-wrapper d-flex">
-        <div className="sidebar p-3 border-end border-secondary">
-          <Nav className="flex-column mb-4">
-            <Nav.Link className="sidebar-link active-link text-light">
-              Boards
-            </Nav.Link>
-            <Nav.Link
-              as={NavLink}
-              to="/home"
-              className="sidebar-link text-secondary"
-            >
-              Home
-            </Nav.Link>
-          </Nav>
-          <div className="sidebar-label text-secondary small fw-bold mb-2">
-            Workspaces
-          </div>
-          <Nav className="flex-column">
-            <Nav.Link className="sidebar-link d-flex align-items-center gap-2 text-light">
-              <div className="workspace-icon bg-warning text-dark">A</div>
-              Animate Workspace
-            </Nav.Link>
-
-            <div className="d-flex flex-column gap-1 ps-4">
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-kanban me-2"></i>
-                Boards
-              </Nav.Link>
-
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-people me-2"></i>
-                Members
-              </Nav.Link>
-
-              <Nav.Link className="sidebar-link text-secondary py-1">
-                <i className="bi bi-gear me-2"></i>
-                Settings
-              </Nav.Link>
-            </div>
-          </Nav>
-        </div>
-
-        <Container fluid className="content-area p-4">
-          <section className="mb-5">
-            <h6 className="text-secondary mb-3">Recently viewed</h6>
-            <div className="board-tile gradient-purple">
-              <span className="fw-bold">My board</span>
-            </div>
-          </section>
+        <div className="container-fluid vh-100 bg-dark-main text-light d-flex p-0">
+          {/* SIDEBAR */}
+          <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
+            <section className="mb-4">
+              <div className="d-flex flex-column gap-1 mt-3">
+                <Link
+                  to="/boards"
+                  className="sidebar-btn-link text-start active text-decoration-none"
+                >
+                  <i className="bi bi-columns-gap me-2"></i>Boards
+                </Link>
+                <Link
+                  to="/home"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
+                  <i className="bi bi-activity me-2"></i>Home
+                </Link>
+              </div>
+            </section>
 
             <section>
               <h6 className="sidebar-heading px-2">Workspaces</h6>
@@ -419,14 +670,8 @@ const Dashboard = () => {
               </div>
 
               <Row className="g-2">
-                <Col xs="auto">
-                  <div
-                    style={boardTileGradientStyle}
-                    className="board-tile-hover"
-                  >
-                    <div style={boardTitleOverlayStyle}>My board</div>
-                  </div>
-                </Col>
+                <BoardTemplate boards={boards} />
+
                 <Col xs="auto">
                   <div
                     style={createNewBoardStyle}
@@ -470,14 +715,13 @@ const Dashboard = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="pt-0">
-          {/* Enhanced Preview with Image Overlay */}
           <div
             className="position-relative mb-4 overflow-hidden"
             style={{
               backgroundColor: selectedColor,
               minHeight: "120px",
               borderRadius: "8px",
-              backgroundImage: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor}dd 100%)`,
+
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
               transition: "all 0.3s ease",
             }}
@@ -670,6 +914,8 @@ const Dashboard = () => {
               <Form.Control
                 type="text"
                 placeholder="Enter board title..."
+                value={boardTitle}
+                onChange={(e) => setBoardTitle(e.target.value)}
                 className="bg-dark text-light border-secondary"
                 style={{
                   fontSize: "14px",
@@ -702,7 +948,7 @@ const Dashboard = () => {
                       setVisibility({
                         title: "Private",
                         icon: "bi-lock",
-                        desc: "Board members and Animatewell Workspace admin can see and edit this board.",
+                        desc: "Board members and workspace admins can see and edit this board.",
                       })
                     }
                   >
@@ -710,30 +956,7 @@ const Dashboard = () => {
                     <div className="visibility-text">
                       <span className="title">Private</span>
                       <span className="desc">
-                        Board members and Animatewell Workspace admin can see
-                        and edit this board.
-                      </span>
-                    </div>
-                  </Dropdown.Item>
-
-                  {/* Workspace Option */}
-                  <Dropdown.Item
-                    as="div"
-                    className="visibility-item"
-                    onClick={() =>
-                      setVisibility({
-                        title: "Workspace",
-                        icon: "bi-people",
-                        desc: "All members of the Animatewell Workspace can see and edit this board.",
-                      })
-                    }
-                  >
-                    <i className="bi bi-people fs-5 mt-1"></i>
-                    <div className="visibility-text">
-                      <span className="title">Workspace</span>
-                      <span className="desc">
-                        All members of the Animatewell Workspace can see and
-                        edit this board.
+                        Board members and admins can see and edit this board.
                       </span>
                     </div>
                   </Dropdown.Item>
@@ -746,7 +969,7 @@ const Dashboard = () => {
                       setVisibility({
                         title: "Public",
                         icon: "bi-globe",
-                        desc: "Anyone on the internet can see this board. Only board members can edit.",
+                        desc: "Anyone on the workspace can see this board. Only board members can edit.",
                       })
                     }
                   >
@@ -764,6 +987,7 @@ const Dashboard = () => {
             </Form.Group>
 
             <Button
+              onClick={handleCreateBoard}
               variant="primary"
               className="w-100 fw-bold py-2"
               style={{
@@ -771,7 +995,7 @@ const Dashboard = () => {
                 borderRadius: "6px",
                 transition: "all 0.2s ease",
               }}
-              disabled
+              disabled={!boardTitle.trim()}
             >
               Create Board
             </Button>
@@ -779,7 +1003,6 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Closed Boards Modal */}
       <Modal
         show={showClosedModal}
         onHide={handleCloseClosedModal}
@@ -823,7 +1046,6 @@ const Dashboard = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Apps Overlay */}
       <Overlay
         target={target.current}
         show={showOverlay}
@@ -837,25 +1059,20 @@ const Dashboard = () => {
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
-                onClick={() => navigate('/home')}
               >
-                <i className="bi bi-house-door-fill"></i>
-                Home
+                <i className="bi bi-house-door-fill"></i> Home
               </Button>
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
               >
-                <i className="bi bi-person-badge-fill"></i>
-                Admin Panel
+                <i className="bi bi-person-badge-fill"></i> Admin Panel
               </Button>
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
-                onClick={() => navigate('/boards')}
               >
-                <i className="bi bi-columns-gap"></i>
-                Boards
+                <i className="bi bi-columns-gap"></i> Boards
               </Button>
             </div>
           </div>

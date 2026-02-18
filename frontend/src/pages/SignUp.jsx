@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../config/api";
 
 import AuthLayout from "../components/auth/AuthLayout";
 import InputField from "../components/auth/inputField";
@@ -8,6 +7,8 @@ import GoogleButton from "../components/auth/GoogleBtn";
 
 import "../css/style.css";
 import "../css/sign.css";
+
+import api from "../config/api";
 
 function SignUp() {
   const navigate = useNavigate();
@@ -17,20 +18,6 @@ function SignUp() {
     user_password: "",
     confirm_password: "",
   });
-
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        await api.get("/auth/check");
-      } catch (err) {
-        if (err.response?.status === 400) {
-          navigate("/dashboard", { replace: true });
-        }
-      }
-    };
-
-    checkSession();
-  }, [navigate]);
 
   const handleChange = (id, value) => {
     setFormData((prev) => ({
@@ -48,37 +35,29 @@ function SignUp() {
     }
 
     try {
-      const res = await api.post("/auth/register", {
-        user_name: formData.user_name,
-        user_email: formData.user_email,
-        user_password: formData.user_password,
-      });
+      const res = await api.post("/auth/register", formData);
+
       const data = res.data;
 
-      alert(data.message);
-      if (data.needsPassword) {
-        navigate("/set-password");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      if (err.response) {
-        if (err.response.status === 400) {
-          alert("You are already logged in. Redirecting to dashboard...");
-          navigate("/dashboard", { replace: true });
+      if (res.status === 200) {
+        if (data.needsPassword) {
+          navigate("/set-password");
         } else {
-          console.error("Sign-up Failed:", err.response.data.message);
-          alert(err.response.data.message);
+          navigate("/dashboard");
         }
       } else {
-        console.error("Error during sign up:", err.message);
-        alert("Error during sign up. Please try again.");
+        console.error("Sign-up failed:", data.message);
       }
+
+      alert(data.message);
+    } catch (err) {
+      console.error("Error during sign up:", err);
+      alert("Error during sign up. Please try again.");
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
   return (
@@ -119,7 +98,7 @@ function SignUp() {
           onChange={(e) => handleChange("confirm_password", e.target.value)}
         />
         <button type="submit" className="btn btn-signup">
-          Sign Up
+          Sign In
         </button>
       </form>
 

@@ -16,6 +16,8 @@ router.post('/boards', authMiddleware, taskController.createBoard);
 router.patch('/boards/:board_id', protect, taskController.patchBoard);
 router.delete('/boards/:board_id', protect, taskController.deleteBoard);
 router.get('/boards', authMiddleware, taskController.getBoards);
+router.get('/getBoardById/:board_id', taskController.getBoardById);
+router.get('/getUserBoards/:board_id', taskController.getUserBoards);
 
 //BACKGROUND
 router.patch('/boardbg/:board_id/photo', protect, boardbgMiddleware.single("file"), taskController.boardBackground);
@@ -67,7 +69,7 @@ router.post('/duplicateList/:board_id/:list_id', protect, taskController.duplica
 router.post('/convertCard/:board_id/:item_id', protect, taskController.convertCard);
 
 router.get('/activityLogs/:card_id', protect, taskController.getActivityLogs);
-router.get('/userCard/', protect, taskController.userCard);
-router.get('/userActivity/', protect, taskController.userActivity);
+router.get('/userCard/', authMiddleware, taskController.userCard);
+router.get('/userActivity/', authMiddleware, taskController.userActivity);
 
 module.exports = router;

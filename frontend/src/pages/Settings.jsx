@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { Link } from "react-router-dom";
 
 const Settings = () => {
   const bgColor = "#1d2125";
@@ -45,13 +46,18 @@ const Settings = () => {
 
   return (
     <div
-      className="container-fluid vh-100 text-light d-flex p-0 position-relative"
-      style={{ backgroundColor: bgColor, fontFamily: "Segoe UI, sans-serif" }}
+      className="text-light d-flex p-0"
+      style={{
+        backgroundColor: bgColor,
+        fontFamily: "Segoe UI, sans-serif",
+        height: "100vh",
+        overflow: "hidden",
+      }}
     >
       <style>{`
         .option-hover:hover { background: rgba(255,255,255,0.05); }
         input:focus, textarea:focus { border-color: ${tradianBlue} !important; box-shadow: 0 0 0 2px rgba(87,115,255,0.2) !important; }
-        .sidebar { width: 260px; background-color: #1d2125; }
+        .sidebar { width: 260px; min-width: 260px; background-color: #1d2125; height: 100vh; flex-shrink: 0; }
         .sidebar-heading { color: #a8b4c1; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .sidebar-btn-link { background: none; border: none; color: #9fadbc; padding: 6px 12px; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; width: 100%; text-align: left; }
         .sidebar-btn-link:hover { background-color: #333c44; color: #fff; }
@@ -60,366 +66,429 @@ const Settings = () => {
         .sidebar-workspace-btn { background: none; border: none; color: #9fadbc; padding: 4px 8px; }
       `}</style>
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR — never moves */}
       <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
         <section className="mb-4">
           <h6 className="sidebar-heading px-2">Personal Settings</h6>
           <div className="d-flex flex-column gap-1 mt-3">
-            <button className="sidebar-btn-link text-start">
-              <i className="bi bi-person me-2"></i> Profile and Visibility
-            </button>
-            <button className="sidebar-btn-link text-start">
-              <i className="bi bi-activity me-2"></i> Activity
-            </button>
-            <button className="sidebar-btn-link text-start">
+            <Link
+              to="/activity"
+              className="sidebar-btn-link text-decoration-none"
+            >
+              <i className="bi bi-list-task me-2"></i> Activity
+            </Link>
+            <Link to="/cards" className="sidebar-btn-link text-decoration-none">
               <i className="bi bi-card-text me-2"></i> Card
-            </button>
-            <button className="sidebar-btn-link text-start">
+            </Link>
+            <Link
+              to="/settingpage"
+              className="sidebar-btn-link text-decoration-none"
+            >
               <i className="bi bi-gear me-2"></i> Settings
-            </button>
+            </Link>
           </div>
         </section>
 
         <section>
           <h6 className="sidebar-heading px-2">Workspaces</h6>
-          <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+          <div className="d-flex align-items-center mt-3 mb-2 w-100 text-start px-2">
             <span className="workspace-icon me-2">A</span>
-            <span className="fw-bold">Animate Workspace</span>
-          </button>
+            <span className="fw-bold" style={{ color: "#9fadbc" }}>
+              Animate Workspace
+            </span>
+          </div>
           <div className="d-flex flex-column gap-1 ps-4">
-            <button className="sidebar-btn-link text-start">
+            <Link
+              to="/boardbutton"
+              className="sidebar-btn-link text-decoration-none"
+            >
               <i className="bi bi-kanban me-2"></i> Boards
-            </button>
-            <button className="sidebar-btn-link text-start">
+            </Link>
+            <Link
+              to="/members"
+              className="sidebar-btn-link text-decoration-none"
+            >
               <i className="bi bi-people me-2"></i> Members
-            </button>
-            <button className="sidebar-btn-link text-start active">
+            </Link>
+            <Link
+              to="/settings"
+              className="sidebar-btn-link active text-decoration-none"
+            >
               <i className="bi bi-gear me-2"></i> Settings
-            </button>
+            </Link>
           </div>
         </section>
       </nav>
 
-      {/* MAIN */}
+      {/* RIGHT COLUMN */}
       <div
-        className="flex-grow-1 p-4 overflow-auto"
-        style={{ maxHeight: "100vh" }}
+        style={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          overflow: "hidden",
+        }}
       >
-        <div style={{ maxWidth: "800px" }}>
-          <h5 className="fw-bold mb-4" style={{ fontSize: "1.1rem" }}>
-            Workspace settings
-          </h5>
-          {!isEditingWorkspace ? (
-            <div className="d-flex align-items-center gap-3 mb-5">
-              <div
-                className="rounded d-flex align-items-center justify-content-center fw-bold text-dark"
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  background: "#f5cd47",
-                  fontSize: "28px",
-                }}
-              >
-                {workspaceName.charAt(0)}
-              </div>
-              <div>
-                <div className="d-flex align-items-center gap-2">
-                  <h3 className="h5 mb-0 fw-bold">{workspaceName}</h3>
-                  <span
-                    onClick={() => setIsEditingWorkspace(true)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <PencilIcon />
-                  </span>
-                </div>
-                <div className="text-secondary" style={{ fontSize: "13px" }}>
-                  Premium <LockIcon size="12" color="#ff5c5c" /> Private
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-5" style={{ maxWidth: "400px" }}>
-              <div className="mb-3">
-                <label
-                  className="form-label fw-bold text-secondary"
-                  style={{ fontSize: "12px" }}
-                >
-                  Name <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="form-control form-control-sm text-white border-secondary"
-                  style={{ backgroundColor: "#222120", outline: "none" }}
-                  value={tempName}
-                  onChange={(e) => setTempName(e.target.value)}
-                />
-              </div>
-              <div className="mb-3">
-                <label
-                  className="form-label fw-bold text-secondary"
-                  style={{ fontSize: "12px" }}
-                >
-                  Email <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="email"
-                  className="form-control form-control-sm text-white border-secondary"
-                  style={{ backgroundColor: "#222120" }}
-                  placeholder="example@work.com"
-                />
-              </div>
-              <div className="mb-3">
-                <label
-                  className="form-label fw-bold text-secondary"
-                  style={{ fontSize: "12px" }}
-                >
-                  Description (optional)
-                </label>
-                <textarea
-                  className="form-control form-control-sm text-white border-secondary"
-                  style={{ backgroundColor: "#222120" }}
-                  rows="2"
-                ></textarea>
-              </div>
-              <div className="d-flex gap-2">
-                <button
-                  className="btn btn-sm px-3"
-                  style={{ backgroundColor: tradianBlue, color: "white" }}
-                  onClick={handleSaveWorkspace}
-                >
-                  Save
-                </button>
-                <button
-                  className="btn btn-sm px-3 btn-secondary"
-                  onClick={() => setIsEditingWorkspace(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+        {/* X button row — pinned, never scrolls */}
+        <div
+          style={{
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "12px 16px",
+            backgroundColor: bgColor,
+          }}
+        >
+          <button
+            style={{
+              width: "32px",
+              height: "32px",
+              backgroundColor: "#282e33",
+              border: "none",
+              color: "#9fadbc",
+              padding: 0,
+              borderRadius: "50%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <i
+              className="bi bi-x-lg"
+              style={{ fontSize: "14px", lineHeight: 1 }}
+            ></i>
+          </button>
+        </div>
 
-          <div className="w-100 position-relative">
-            <SettingRow
-              title="Workspace visibility"
-              content={
+        {/* Scrollable content */}
+        <div
+          style={{
+            flexGrow: 1,
+            overflowY: "auto",
+            padding: "0 24px 24px 24px",
+          }}
+        >
+          <div style={{ maxWidth: "800px" }}>
+            <h5 className="fw-bold mb-4" style={{ fontSize: "1.1rem" }}>
+              Workspace settings
+            </h5>
+
+            {!isEditingWorkspace ? (
+              <div className="d-flex align-items-center gap-3 mb-5">
+                <div
+                  className="rounded d-flex align-items-center justify-content-center fw-bold text-dark"
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    background: "#f5cd47",
+                    fontSize: "28px",
+                  }}
+                >
+                  {workspaceName.charAt(0)}
+                </div>
                 <div>
-                  <LockIcon size="14" color="#ff5c5c" />{" "}
-                  <span style={{ color: "#ff5c5c" }}>Private</span> – This
-                  Workspace is private.
-                </div>
-              }
-            />
-
-            <SettingRow
-              title="Board creation restrictions"
-              icon={<BriefcaseIcon />}
-              hasChange
-              onChangeClick={(e) => {
-                e.stopPropagation();
-                setActiveOverlay("creation");
-              }}
-              content={
-                <div style={{ color: "#b6c2cf" }}>
-                  <p className="mb-1">
-                    {creationVisible} can create <PeopleIcon size={14} />{" "}
-                    Workspace visible boards.
-                  </p>
-                  <p className="mb-0">
-                    {creationPrivate} can create <LockIcon size={14} /> private
-                    boards.
-                  </p>
-                </div>
-              }
-            />
-            {activeOverlay === "creation" && (
-              <div
-                ref={overlayRef}
-                className="position-absolute shadow-lg p-3"
-                style={{
-                  backgroundColor: "#282e33",
-                  width: "320px",
-                  right: "-40px",
-                  top: "-80px",
-                  zIndex: 100,
-                  borderRadius: "8px",
-                  border: "1px solid #444c54",
-                }}
-              >
-                <OverlayHeader
-                  title="Board creation restrictions"
-                  onClose={() => setActiveOverlay(null)}
-                />
-                <div style={{ fontSize: "13px" }}>
-                  <p className="fw-bold mb-2">
-                    Who can create <PeopleIcon size={12} /> Workspace visible
-                    boards?
-                  </p>
-                  {[
-                    "Any Workspace member",
-                    "Only Workspace admins",
-                    "Nobody",
-                  ].map((opt) => (
-                    <OptionItem
-                      key={opt}
-                      text={opt}
-                      isSelected={creationVisible === opt}
-                      onClick={() => setCreationVisible(opt)}
-                      blue={tradianBlue}
-                    />
-                  ))}
-                  <hr className="bg-secondary my-2" />
-                  <p className="fw-bold mb-2">
-                    Who can create <LockIcon size={12} /> private boards?
-                  </p>
-                  {[
-                    "Any Workspace member",
-                    "Only Workspace admins",
-                    "Nobody",
-                  ].map((opt) => (
-                    <OptionItem
-                      key={opt}
-                      text={opt}
-                      isSelected={creationPrivate === opt}
-                      onClick={() => setCreationPrivate(opt)}
-                      blue={tradianBlue}
-                    />
-                  ))}
+                  <div className="d-flex align-items-center gap-2">
+                    <h3 className="h5 mb-0 fw-bold">{workspaceName}</h3>
+                    <span
+                      onClick={() => setIsEditingWorkspace(true)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <PencilIcon />
+                    </span>
+                  </div>
+                  <div className="text-secondary" style={{ fontSize: "13px" }}>
+                    Premium <LockIcon size="12" color="#ff5c5c" /> Private
+                  </div>
                 </div>
               </div>
-            )}
-
-            <SettingRow
-              title="Board deletion restrictions"
-              icon={<BriefcaseIcon />}
-              hasChange
-              onChangeClick={(e) => {
-                e.stopPropagation();
-                setActiveOverlay("deletion");
-              }}
-              content={
-                <div style={{ color: "#b6c2cf" }}>
-                  <p className="mb-1">
-                    {deletionVisible} can delete <PeopleIcon size={14} />{" "}
-                    Workspace visible boards.
-                  </p>
-                  <p className="mb-0">
-                    {deletionPrivate} can delete <LockIcon size={14} /> private
-                    boards.
-                  </p>
-                </div>
-              }
-            />
-            {activeOverlay === "deletion" && (
-              <div
-                ref={overlayRef}
-                className="position-absolute shadow-lg p-3"
-                style={{
-                  backgroundColor: "#282e33",
-                  width: "320px",
-                  right: "-40px",
-                  top: "-80px",
-                  zIndex: 100,
-                  borderRadius: "8px",
-                  border: "1px solid #444c54",
-                }}
-              >
-                <OverlayHeader
-                  title="Board deletion restrictions"
-                  onClose={() => setActiveOverlay(null)}
-                />
-                <div style={{ fontSize: "13px" }}>
-                  <p className="fw-bold mb-2">
-                    Who can delete <PeopleIcon size={12} /> Workspace visible
-                    boards?
-                  </p>
-                  {[
-                    "Any Workspace member",
-                    "Only Workspace admins",
-                    "Nobody",
-                  ].map((opt) => (
-                    <OptionItem
-                      key={opt}
-                      text={opt}
-                      isSelected={deletionVisible === opt}
-                      onClick={() => setDeletionVisible(opt)}
-                      blue={tradianBlue}
-                    />
-                  ))}
-                  <hr className="bg-secondary my-2" />
-                  <p className="fw-bold mb-2">
-                    Who can delete <LockIcon size={12} /> private boards?
-                  </p>
-                  {[
-                    "Any Workspace member",
-                    "Only Workspace admins",
-                    "Nobody",
-                  ].map((opt) => (
-                    <OptionItem
-                      key={opt}
-                      text={opt}
-                      isSelected={deletionPrivate === opt}
-                      onClick={() => setDeletionPrivate(opt)}
-                      blue={tradianBlue}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <SettingRow
-              title="Sharing boards with guests"
-              icon={<BriefcaseIcon />}
-              hasChange
-              onChangeClick={(e) => {
-                e.stopPropagation();
-                setActiveOverlay("guests");
-              }}
-              content={
-                guestSelection === "Anybody"
-                  ? "Anybody can send or receive invitations to boards in this Workspace."
-                  : "Workspace boards can only be shared with members of this Workspace."
-              }
-            />
-            {activeOverlay === "guests" && (
-              <div
-                ref={overlayRef}
-                className="position-absolute shadow-lg p-3"
-                style={{
-                  backgroundColor: "#282e33",
-                  width: "320px",
-                  right: "-40px",
-                  top: "75px",
-                  zIndex: 100,
-                  borderRadius: "8px",
-                  border: "1px solid #444c54",
-                }}
-              >
-                <OverlayHeader
-                  title="Inviting guests"
-                  onClose={() => setActiveOverlay(null)}
-                />
-                <div style={{ fontSize: "13px" }}>
-                  <p className="fw-bold mb-3">
-                    Who can Workspace boards be shared with?
-                  </p>
-                  <OptionItem
-                    text="Anybody"
-                    isSelected={guestSelection === "Anybody"}
-                    onClick={() => setGuestSelection("Anybody")}
-                    blue={tradianBlue}
-                    subtext="Workspace boards can be shared with anybody."
-                  />
-                  <OptionItem
-                    text="Only Workspace members"
-                    isSelected={guestSelection === "Only Workspace members"}
-                    onClick={() => setGuestSelection("Only Workspace members")}
-                    blue={tradianBlue}
-                    subtext="Workspace boards can only be shared with members of this Workspace."
+            ) : (
+              <div className="mb-5" style={{ maxWidth: "400px" }}>
+                <div className="mb-3">
+                  <label
+                    className="form-label fw-bold text-secondary"
+                    style={{ fontSize: "12px" }}
+                  >
+                    Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control form-control-sm text-white border-secondary"
+                    style={{ backgroundColor: "#222120", outline: "none" }}
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
                   />
                 </div>
+                <div className="mb-3">
+                  <label
+                    className="form-label fw-bold text-secondary"
+                    style={{ fontSize: "12px" }}
+                  >
+                    Email <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="form-control form-control-sm text-white border-secondary"
+                    style={{ backgroundColor: "#222120" }}
+                    placeholder="example@work.com"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label
+                    className="form-label fw-bold text-secondary"
+                    style={{ fontSize: "12px" }}
+                  >
+                    Description (optional)
+                  </label>
+                  <textarea
+                    className="form-control form-control-sm text-white border-secondary"
+                    style={{ backgroundColor: "#222120" }}
+                    rows="2"
+                  ></textarea>
+                </div>
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-sm px-3"
+                    style={{ backgroundColor: tradianBlue, color: "white" }}
+                    onClick={handleSaveWorkspace}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="btn btn-sm px-3 btn-secondary"
+                    onClick={() => setIsEditingWorkspace(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
+
+            <div className="w-100 position-relative">
+              <SettingRow
+                title="Workspace visibility"
+                content={
+                  <div>
+                    <LockIcon size="14" color="#ff5c5c" />{" "}
+                    <span style={{ color: "#ff5c5c" }}>Private</span> – This
+                    Workspace is private.
+                  </div>
+                }
+              />
+
+              <SettingRow
+                title="Board creation restrictions"
+                icon={<BriefcaseIcon />}
+                hasChange
+                onChangeClick={(e) => {
+                  e.stopPropagation();
+                  setActiveOverlay("creation");
+                }}
+                content={
+                  <div style={{ color: "#b6c2cf" }}>
+                    <p className="mb-1">
+                      {creationVisible} can create <PeopleIcon size={14} />{" "}
+                      Workspace visible boards.
+                    </p>
+                    <p className="mb-0">
+                      {creationPrivate} can create <LockIcon size={14} />{" "}
+                      private boards.
+                    </p>
+                  </div>
+                }
+              />
+              {activeOverlay === "creation" && (
+                <div
+                  ref={overlayRef}
+                  className="position-absolute shadow-lg p-3"
+                  style={{
+                    backgroundColor: "#282e33",
+                    width: "320px",
+                    right: "-40px",
+                    top: "-80px",
+                    zIndex: 100,
+                    borderRadius: "8px",
+                    border: "1px solid #444c54",
+                  }}
+                >
+                  <OverlayHeader
+                    title="Board creation restrictions"
+                    onClose={() => setActiveOverlay(null)}
+                  />
+                  <div style={{ fontSize: "13px" }}>
+                    <p className="fw-bold mb-2">
+                      Who can create <PeopleIcon size={12} /> Workspace visible
+                      boards?
+                    </p>
+                    {[
+                      "Any Workspace member",
+                      "Only Workspace admins",
+                      "Nobody",
+                    ].map((opt) => (
+                      <OptionItem
+                        key={opt}
+                        text={opt}
+                        isSelected={creationVisible === opt}
+                        onClick={() => setCreationVisible(opt)}
+                        blue={tradianBlue}
+                      />
+                    ))}
+                    <hr className="bg-secondary my-2" />
+                    <p className="fw-bold mb-2">
+                      Who can create <LockIcon size={12} /> private boards?
+                    </p>
+                    {[
+                      "Any Workspace member",
+                      "Only Workspace admins",
+                      "Nobody",
+                    ].map((opt) => (
+                      <OptionItem
+                        key={opt}
+                        text={opt}
+                        isSelected={creationPrivate === opt}
+                        onClick={() => setCreationPrivate(opt)}
+                        blue={tradianBlue}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <SettingRow
+                title="Board deletion restrictions"
+                icon={<BriefcaseIcon />}
+                hasChange
+                onChangeClick={(e) => {
+                  e.stopPropagation();
+                  setActiveOverlay("deletion");
+                }}
+                content={
+                  <div style={{ color: "#b6c2cf" }}>
+                    <p className="mb-1">
+                      {deletionVisible} can delete <PeopleIcon size={14} />{" "}
+                      Workspace visible boards.
+                    </p>
+                    <p className="mb-0">
+                      {deletionPrivate} can delete <LockIcon size={14} />{" "}
+                      private boards.
+                    </p>
+                  </div>
+                }
+              />
+              {activeOverlay === "deletion" && (
+                <div
+                  ref={overlayRef}
+                  className="position-absolute shadow-lg p-3"
+                  style={{
+                    backgroundColor: "#282e33",
+                    width: "320px",
+                    right: "-40px",
+                    top: "-80px",
+                    zIndex: 100,
+                    borderRadius: "8px",
+                    border: "1px solid #444c54",
+                  }}
+                >
+                  <OverlayHeader
+                    title="Board deletion restrictions"
+                    onClose={() => setActiveOverlay(null)}
+                  />
+                  <div style={{ fontSize: "13px" }}>
+                    <p className="fw-bold mb-2">
+                      Who can delete <PeopleIcon size={12} /> Workspace visible
+                      boards?
+                    </p>
+                    {[
+                      "Any Workspace member",
+                      "Only Workspace admins",
+                      "Nobody",
+                    ].map((opt) => (
+                      <OptionItem
+                        key={opt}
+                        text={opt}
+                        isSelected={deletionVisible === opt}
+                        onClick={() => setDeletionVisible(opt)}
+                        blue={tradianBlue}
+                      />
+                    ))}
+                    <hr className="bg-secondary my-2" />
+                    <p className="fw-bold mb-2">
+                      Who can delete <LockIcon size={12} /> private boards?
+                    </p>
+                    {[
+                      "Any Workspace member",
+                      "Only Workspace admins",
+                      "Nobody",
+                    ].map((opt) => (
+                      <OptionItem
+                        key={opt}
+                        text={opt}
+                        isSelected={deletionPrivate === opt}
+                        onClick={() => setDeletionPrivate(opt)}
+                        blue={tradianBlue}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <SettingRow
+                title="Sharing boards with guests"
+                icon={<BriefcaseIcon />}
+                hasChange
+                onChangeClick={(e) => {
+                  e.stopPropagation();
+                  setActiveOverlay("guests");
+                }}
+                content={
+                  guestSelection === "Anybody"
+                    ? "Anybody can send or receive invitations to boards in this Workspace."
+                    : "Workspace boards can only be shared with members of this Workspace."
+                }
+              />
+              {activeOverlay === "guests" && (
+                <div
+                  ref={overlayRef}
+                  className="position-absolute shadow-lg p-3"
+                  style={{
+                    backgroundColor: "#282e33",
+                    width: "320px",
+                    right: "-40px",
+                    top: "75px",
+                    zIndex: 100,
+                    borderRadius: "8px",
+                    border: "1px solid #444c54",
+                  }}
+                >
+                  <OverlayHeader
+                    title="Inviting guests"
+                    onClose={() => setActiveOverlay(null)}
+                  />
+                  <div style={{ fontSize: "13px" }}>
+                    <p className="fw-bold mb-3">
+                      Who can Workspace boards be shared with?
+                    </p>
+                    <OptionItem
+                      text="Anybody"
+                      isSelected={guestSelection === "Anybody"}
+                      onClick={() => setGuestSelection("Anybody")}
+                      blue={tradianBlue}
+                      subtext="Workspace boards can be shared with anybody."
+                    />
+                    <OptionItem
+                      text="Only Workspace members"
+                      isSelected={guestSelection === "Only Workspace members"}
+                      onClick={() =>
+                        setGuestSelection("Only Workspace members")
+                      }
+                      blue={tradianBlue}
+                      subtext="Workspace boards can only be shared with members of this Workspace."
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -515,10 +584,17 @@ const PeopleIcon = ({ size = 14 }) => (
   </svg>
 );
 const PencilIcon = () => (
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
 );
 const BriefcaseIcon = () => (
   <svg

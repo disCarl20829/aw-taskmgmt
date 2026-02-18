@@ -21,7 +21,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/landing" element={<Landing />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/set-password" element={<SetPassword />} />
@@ -33,7 +33,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/activity" element={<Activity />} />
         <Route path="/cards" element={<Cards />} />
-        <Route path="/cardBoards" element={<CardBoards />} />
+        <Route path="/cardBoards/:board_id" element={<CardBoards />} />
         <Route path="/settingPage" element={<SettingPage />} />
         <Route path="/boardbutton" element={<BoardButton />} />
       </Routes>

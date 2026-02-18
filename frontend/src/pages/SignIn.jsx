@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../config/api";
 
 import AuthLayout from "../components/auth/AuthLayout";
 import InputField from "../components/auth/inputField";
@@ -8,6 +7,8 @@ import GoogleButton from "../components/auth/GoogleBtn";
 
 import "../css/style.css";
 import "../css/sign.css";
+
+import api from "../config/api";
 
 function SignIn() {
   const navigate = useNavigate();
@@ -27,13 +28,11 @@ function SignIn() {
     e.preventDefault();
 
     try {
-      const res = await api.post("/auth/signin", {
-        body: JSON.stringify(formData),
-      });
+      const res = await api.post("/auth/signin", formData);
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (res.ok) {
+      if (res.status === 200) {
         navigate("/dashboard");
       } else {
         console.error("Sign-in failed:", data.message);
@@ -41,12 +40,17 @@ function SignIn() {
 
       alert(data.message);
     } catch (err) {
-      console.error("Error during sign in:", err);
+      alert(err.response.data.message);
+      if (err.status === 400) navigate("/dashboard");
+      console.error(
+        "Error during sign in:",
+        err.response?.data?.message || err.message,
+      );
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://192.168.1.18:3000/auth/google";
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
   return (

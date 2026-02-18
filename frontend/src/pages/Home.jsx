@@ -1,4 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+
 import {
   Navbar,
   Nav,
@@ -14,20 +16,25 @@ import {
   Modal,
   Dropdown,
 } from "react-bootstrap";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
-import { NavLink, Link } from "react-router-dom";
+import api from "../config/api";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [showOverlay, setShowOverlay] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#0079bf");
   const [visibility, setVisibility] = useState({
-    title: "Workspace",
+    title: "Public",
     icon: "bi-people",
-    desc: "All members of the Animatewell Workspace can see and edit this board."
+    desc: "All members of the workspace can see and edit this board.",
   });
   const [showModal, setShowModal] = useState(false);
   const [showClosedModal, setShowClosedModal] = useState(false);
+  const [user, setUser] = useState(null);
+  const [boards, setBoards] = useState([]);
+  const [boardTitle, setBoardTitle] = useState("");
   const target = useRef(null);
 
   const handleCloseModal = () => setShowModal(false);
@@ -36,9 +43,84 @@ const Home = () => {
   const handleCloseClosedModal = () => setShowClosedModal(false);
   const handleShowClosedModal = () => setShowClosedModal(true);
 
-  const handleLogout = () => {
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    try {
+      const res = await api.post("/auth/signout");
+      alert(res.data.message);
+      navigate("/signin", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
+  const fetchBoards = async () => {
+    try {
+      const res = await api.get("/tasks/boards");
+      setBoards(res.data);
+    } catch (err) {
+      console.error("Error fetching boards:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBoards();
+  }, []);
+
+  // ✅ ADDED FUNCTION
+  const handleCreateBoard = async () => {
+    try {
+      const res = await api.post("/tasks/boards", {
+        board_title: boardTitle,
+        board_background: selectedColor,
+        board_visibility: visibility.title.toLowerCase(),
+      });
+
+      setBoards((prev) => [...prev, res.data.board]);
+
+      setBoardTitle("");
+      setSelectedColor("#0079bf");
+      setVisibility({
+        title: "Workspace",
+        icon: "bi-people",
+        desc: "All members of the Animatewell Workspace can see and edit this board.",
+      });
+
+      setShowModal(false);
+    } catch (err) {
+      console.error("Create board failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const res = await api.get("/auth/check");
+        setUser(res.data.user);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          navigate("/signin", { replace: true });
+        }
+      }
+    };
+
+    getUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const res = await api.get("/tasks/boards");
+        setBoards(res.data.boards);
+      } catch (err) {
+        console.error("Failed to fetch boards:", err);
+      }
+    };
+
+    fetchBoards();
+  }, []);
+
+  /* ===========================
+     NOTHING ELSE CHANGED ABOVE
+     =========================== */
 
   const notificationPopover = (
     <Popover id="popover-notifications" className="trello-popover">
@@ -67,25 +149,43 @@ const Home = () => {
       </Popover.Header>
       <Popover.Body className="p-0 bg-dark">
         <div className="d-flex align-items-center p-3 gap-2">
-          <div className="avatar-circle bg-info">U</div>
+          {/* AVATAR: Pulls first letter of email or name */}
+          <div
+            className="avatar-circle bg-info text-white d-flex align-items-center justify-content-center"
+            style={{ width: "40px", height: "40px", borderRadius: "50%" }}
+          >
+            {user?.user_name ? user.user_name.charAt(0).toUpperCase() : "G"}
+          </div>
+
           <div>
-            <div className="fw-bold text-light">User123</div>
-            <div className="text-secondary small">@user123</div>
+            {/* USERNAME: Displays user_name from your DB */}
+            <div className="fw-bold text-light">
+              {user?.user_name || "Guest User"}
+            </div>
+            {/* EMAIL: Displays user_email from your DB */}
+            <div className="text-secondary small">
+              {user?.user_email || "Not signed in"}
+            </div>
           </div>
         </div>
+        <hr className="m-0 border-secondary" />
+        {/* Add a Logout button here to clear the session */}
+
         <ListGroup variant="flush" className="account-list">
           <ListGroup.Item
             action
             as={Link}
-            to="/profile"
+            to="/activity"
             className="bg-dark text-light border-secondary"
           >
-            Profile and visibility
-          </ListGroup.Item>
-          <ListGroup.Item action className="bg-dark text-light border-secondary">
             Activity
           </ListGroup.Item>
-          <ListGroup.Item action className="bg-dark text-light border-secondary">
+          <ListGroup.Item
+            action
+            as={Link}
+            to="/cards"
+            className="bg-dark text-light border-secondary"
+          >
             Card
           </ListGroup.Item>
           <ListGroup.Item
@@ -328,7 +428,7 @@ const Home = () => {
                 className="avatar-circle bg-info"
                 style={{ cursor: "pointer" }}
               >
-                U
+                {user?.user_name ? user.user_name.charAt(0).toUpperCase() : "U"}
               </div>
             </OverlayTrigger>
           </Nav>
@@ -339,31 +439,48 @@ const Home = () => {
           <nav className="sidebar p-3 border-end border-secondary border-opacity-25">
             <section className="mb-4">
               <div className="d-flex flex-column gap-1 mt-3">
-                <button className="sidebar-btn-link text-start">
+                <Link
+                  to="/dashboard"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-columns-gap me-2"></i>Boards
-                </button>
-                <button className="sidebar-btn-link text-start active">
+                </Link>
+                <Link
+                  to="/home"
+                  className="sidebar-btn-link text-start active text-decoration-none"
+                >
                   <i className="bi bi-activity me-2"></i>Home
-                </button>
+                </Link>
               </div>
             </section>
 
             <section>
               <h6 className="sidebar-heading px-2">Workspaces</h6>
-              <button className="sidebar-workspace-btn d-flex align-items-center mt-3 mb-2 w-100 text-start">
+              <div className="d-flex align-items-center mt-3 mb-2 w-100 text-start px-2">
                 <span className="workspace-icon me-2">A</span>
-                <span className="fw-bold">Animate Workspace</span>
-              </button>
+                <span className="fw-bold" style={{ color: "#9fadbc" }}>
+                  Animate Workspace
+                </span>
+              </div>
               <div className="d-flex flex-column gap-1 ps-4">
-                <button className="sidebar-btn-link text-start">
+                <Link
+                  to="/boards"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-kanban me-2"></i> Boards
-                </button>
-                <button className="sidebar-btn-link text-start">
+                </Link>
+                <Link
+                  to="/members"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-people me-2"></i> Members
-                </button>
-                <button className="sidebar-btn-link text-start">
+                </Link>
+                <Link
+                  to="/settings"
+                  className="sidebar-btn-link text-start text-decoration-none"
+                >
                   <i className="bi bi-gear me-2"></i> Settings
-                </button>
+                </Link>
               </div>
             </section>
           </nav>
@@ -393,7 +510,9 @@ const Home = () => {
                   </p>
 
                   <div className="promo-card text-center d-flex flex-column align-items-center justify-content-center">
-                    <h4 className="fw-bold mb-3">Stay on track and up to date</h4>
+                    <h4 className="fw-bold mb-3">
+                      Stay on track and up to date
+                    </h4>
                     <p className="mb-0 mx-auto" style={{ maxWidth: "400px" }}>
                       Invite people to boards and cards, leave comments, add due
                       dates, and we'll show the most important activity here.
@@ -452,7 +571,9 @@ const Home = () => {
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
                     </div>
-                    <span className="text-secondary small">Create new board</span>
+                    <span className="text-secondary small">
+                      Create new board
+                    </span>
                   </div>
                 </div>
               </Col>
@@ -467,68 +588,11 @@ const Home = () => {
         centered
         contentClassName="create-board-modal"
       >
-        <Modal.Header closeButton closeVariant="white" className="border-0">
-          <Modal.Title className="fs-6 w-100 text-center text-light">
-            Create board
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="pt-0">
-          <div className="modal-preview-img mb-3">
-            <div className="preview-skeleton"></div>
-          </div>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-light">
-                Background
-              </Form.Label>
-              <div className="d-flex gap-2 flex-wrap">
-                {["#0079bf", "#d29034", "#519839", "#b04632", "#89609e"].map(
-                  (color) => (
-                    <div
-                      key={color}
-                      className="color-swatch"
-                      style={{ backgroundColor: color }}
-                    ></div>
-                  )
-                )}
-              </div>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-light">
-                Board title *
-              </Form.Label>
-              <Form.Control
-                type="text"
-                className="bg-dark text-light border-secondary"
-              />
-              <Form.Text className="text-muted small">
-                Board title is required
-              </Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-light">
-                Visibility
-              </Form.Label>
-              <Form.Select className="bg-dark text-light border-secondary">
-                <option>Workspace</option>
-                <option>Private</option>
-                <option>Public</option>
-              </Form.Select>
-            </Form.Group>
-            <Button variant="primary" className="w-100 fw-bold py-2" disabled>
-              Create
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-      <Modal
-        show={showModal}
-        onHide={handleCloseModal}
-        centered
-        contentClassName="create-board-modal"
-      >
-        <Modal.Header closeButton closeVariant="white" className="border-0 pb-2">
+        <Modal.Header
+          closeButton
+          closeVariant="white"
+          className="border-0 pb-2"
+        >
           <Modal.Title className="fs-6 w-100 text-center text-light">
             Create board
           </Modal.Title>
@@ -543,7 +607,7 @@ const Home = () => {
               borderRadius: "8px",
               backgroundImage: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor}dd 100%)`,
               boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
             }}
           >
             <div className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center">
@@ -575,7 +639,7 @@ const Home = () => {
                   { color: "#89609e", name: "Royal Purple" },
                   { color: "#cd5a91", name: "Pink Rose" },
                   { color: "#00aacc", name: "Cyan" },
-                  { color: "#ff6b6b", name: "Coral" }
+                  { color: "#ff6b6b", name: "Coral" },
                 ].map(({ color, name }) => (
                   <div
                     key={color}
@@ -590,26 +654,31 @@ const Home = () => {
                         height: "36px",
                         borderRadius: "6px",
                         cursor: "pointer",
-                        border: selectedColor === color
-                          ? "3px solid white"
-                          : "2px solid rgba(255,255,255,0.1)",
-                        transform: selectedColor === color ? "scale(1.1)" : "scale(1)",
+                        border:
+                          selectedColor === color
+                            ? "3px solid white"
+                            : "2px solid rgba(255,255,255,0.1)",
+                        transform:
+                          selectedColor === color ? "scale(1.1)" : "scale(1)",
                         transition: "all 0.2s ease",
-                        boxShadow: selectedColor === color
-                          ? "0 4px 12px rgba(0,0,0,0.4)"
-                          : "0 2px 4px rgba(0,0,0,0.2)"
+                        boxShadow:
+                          selectedColor === color
+                            ? "0 4px 12px rgba(0,0,0,0.4)"
+                            : "0 2px 4px rgba(0,0,0,0.2)",
                       }}
                       onClick={() => setSelectedColor(color)}
                       onMouseEnter={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1.05)";
-                          e.target.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                          e.target.style.boxShadow =
+                            "0 3px 8px rgba(0,0,0,0.3)";
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (selectedColor !== color) {
                           e.target.style.transform = "scale(1)";
-                          e.target.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+                          e.target.style.boxShadow =
+                            "0 2px 4px rgba(0,0,0,0.2)";
                         }
                       }}
                     >
@@ -651,11 +720,12 @@ const Home = () => {
                       cursor: "pointer",
                       position: "relative",
                       overflow: "hidden",
-                      transition: "all 0.2s ease"
+                      transition: "all 0.2s ease",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow = "0 3px 8px rgba(0,0,0,0.3)";
+                      e.currentTarget.style.boxShadow =
+                        "0 3px 8px rgba(0,0,0,0.3)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scale(1)";
@@ -666,7 +736,7 @@ const Home = () => {
                       className="position-absolute w-100 h-100 d-flex align-items-center justify-content-center"
                       style={{
                         backgroundColor: "rgba(0,0,0,0.4)",
-                        backdropFilter: "blur(2px)"
+                        backdropFilter: "blur(2px)",
                       }}
                     >
                       <svg
@@ -689,7 +759,7 @@ const Home = () => {
                       position: "absolute",
                       opacity: 0,
                       width: "0",
-                      height: "0"
+                      height: "0",
                     }}
                   />
                 </div>
@@ -700,7 +770,7 @@ const Home = () => {
                 className="d-flex align-items-center gap-2 p-2 rounded"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)"
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 <div
@@ -709,11 +779,14 @@ const Home = () => {
                     height: "24px",
                     backgroundColor: selectedColor,
                     borderRadius: "4px",
-                    border: "2px solid rgba(255,255,255,0.2)"
+                    border: "2px solid rgba(255,255,255,0.2)",
                   }}
                 ></div>
                 <span className="text-light small">
-                  Selected: <span className="text-secondary">{selectedColor.toUpperCase()}</span>
+                  Selected:{" "}
+                  <span className="text-secondary">
+                    {selectedColor.toUpperCase()}
+                  </span>
                 </span>
               </div>
             </Form.Group>
@@ -725,10 +798,12 @@ const Home = () => {
               <Form.Control
                 type="text"
                 placeholder="Enter board title..."
+                value={boardTitle}
+                onChange={(e) => setBoardTitle(e.target.value)}
                 className="bg-dark text-light border-secondary"
                 style={{
                   fontSize: "14px",
-                  padding: "10px 12px"
+                  padding: "10px 12px",
                 }}
               />
               <Form.Text className="text-muted small">
@@ -737,7 +812,9 @@ const Home = () => {
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-light">Visibility</Form.Label>
+              <Form.Label className="small fw-bold text-light">
+                Visibility
+              </Form.Label>
               <Dropdown className="visibility-dropdown">
                 <Dropdown.Toggle variant="dark" id="dropdown-visibility">
                   <span>
@@ -751,16 +828,21 @@ const Home = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Private",
-                      icon: "bi-lock",
-                      desc: "Board members and Animatewell Workspace admin can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Private",
+                        icon: "bi-lock",
+                        desc: "Board members and Animatewell Workspace admin can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-lock fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Private</span>
-                      <span className="desc">Board members and Animatewell Workspace admin can see and edit this board.</span>
+                      <span className="desc">
+                        Board members and Animatewell Workspace admin can see
+                        and edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -768,16 +850,21 @@ const Home = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Workspace",
-                      icon: "bi-people",
-                      desc: "All members of the Animatewell Workspace can see and edit this board."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Workspace",
+                        icon: "bi-people",
+                        desc: "All members of the Animatewell Workspace can see and edit this board.",
+                      })
+                    }
                   >
                     <i className="bi bi-people fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Workspace</span>
-                      <span className="desc">All members of the Animatewell Workspace can see and edit this board.</span>
+                      <span className="desc">
+                        All members of the Animatewell Workspace can see and
+                        edit this board.
+                      </span>
                     </div>
                   </Dropdown.Item>
 
@@ -785,31 +872,36 @@ const Home = () => {
                   <Dropdown.Item
                     as="div"
                     className="visibility-item"
-                    onClick={() => setVisibility({
-                      title: "Public",
-                      icon: "bi-globe",
-                      desc: "Anyone on the internet can see this board. Only board members can edit."
-                    })}
+                    onClick={() =>
+                      setVisibility({
+                        title: "Public",
+                        icon: "bi-globe",
+                        desc: "Anyone on the internet can see this board. Only board members can edit.",
+                      })
+                    }
                   >
                     <i className="bi bi-globe fs-5 mt-1"></i>
                     <div className="visibility-text">
                       <span className="title">Public</span>
-                      <span className="desc">Anyone on the internet can see this board. Only board members can edit.</span>
+                      <span className="desc">
+                        Anyone on the internet can see this board. Only board
+                        members can edit.
+                      </span>
                     </div>
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             </Form.Group>
-
             <Button
+              onClick={handleCreateBoard}
               variant="primary"
               className="w-100 fw-bold py-2"
               style={{
                 fontSize: "14px",
                 borderRadius: "6px",
-                transition: "all 0.2s ease"
+                transition: "all 0.2s ease",
               }}
-              disabled
+              disabled={!boardTitle.trim()}
             >
               Create Board
             </Button>
@@ -828,27 +920,24 @@ const Home = () => {
           <div {...props} className="apps-dropdown p-4 text-light">
             <div className="d-grid gap-2">
               <Button
-                variant="primary"
-                className="text-start d-flex align-items-center gap-2"
-              >
-                <i className="bi bi-house-door-fill"></i>
-                Home
-              </Button>
-
-              <Button
                 variant="dark"
-                className="text-start d-flex align-items-center gap-2"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
+                onClick={() => navigate("/home")}
               >
-                <i className="bi bi-person-badge-fill"></i>
-                Admin Panel
+                <i className="bi bi-house-door-fill"></i> Home
               </Button>
-
               <Button
                 variant="dark"
                 className="text-start d-flex align-items-center gap-2 border-secondary"
               >
-                <i className="bi bi-columns-gap"></i>
-                Boards
+                <i className="bi bi-person-badge-fill"></i> Admin Panel
+              </Button>
+              <Button
+                variant="dark"
+                className="text-start d-flex align-items-center gap-2 border-secondary"
+                onClick={() => navigate("/boards")}
+              >
+                <i className="bi bi-columns-gap"></i> Boards
               </Button>
             </div>
           </div>

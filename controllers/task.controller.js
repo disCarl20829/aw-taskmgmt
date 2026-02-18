@@ -8,8 +8,6 @@ const messageHandler = require('../utilities/message.handler')
 const duplicateAttachmentFile = require('../utilities/attachment.storage');
 const emit = require('../utilities/socket');
 
-//-----BOARD HANDLING-----\\
-
 //CREATE
 exports.createBoard = catchAsync(async (req, res) => {
     let connection;
@@ -18,12 +16,12 @@ exports.createBoard = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const user_id = req.session.user.user_id;
-        const { board_title, board_description } = req.body;
+        const { board_title, board_description, board_visibility } = req.body;
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query('INSERT INTO board (board_title, board_description, board_owner) VALUES (?, ?, ?)',
-            [board_title, board_description, user_id]
+        const [result] = await connection.query('INSERT INTO board (board_title, board_description, board_owner, board_visibility) VALUES (?, ?, ?, ?)',
+            [board_title, board_description, user_id, board_visibility]
         );
 
         const board_id = result.insertId;
@@ -126,6 +124,32 @@ exports.getBoards = catchAsync(async (req, res) => {
     );
 
     res.json({ message: "Boards was Successfully Retrieved!", boards: result })
+});
+
+exports.getUserBoards = catchAsync(async (req, res) => {
+    const {user_id} = req.params;
+
+    const [result] = await db.query(`SELECT DISTINCT t1.* FROM board AS t1 LEFT JOIN board_user AS t2 ON t1.board_id = t2.board_id AND t2.user_id = ? WHERE t1.board_visibility IN ('public', 'workspace') OR t1.board_owner = ? OR t1.board_visibility = 'private' AND t2.user_id IS NOT NULL`,
+        [user_id, user_id]
+    );
+
+    res.json({ message: "Boards was Successfully Retrieved!", boards: result })
+});
+
+exports.getBoardById = catchAsync (async (req, res) => {
+  const { board_id } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM board WHERE board_id = ?',
+      [board_id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ message: 'Board not found' });
+    }
+    res.json({ board: rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 });
 
 exports.aboutBoard = catchAsync(async (req, res) => {
@@ -296,7 +320,7 @@ exports.getLists = catchAsync(async (req, res) => {
     const board_id = req.params.board_id;
     const user_id = req.session.user.user_id;
 
-    const [lists] = await db.query('SELECT t1.*, t2.role FROM list AS t1 JOIN board_user AS t2 ON t1.board_id = t2.board_id WHERE t1.board_id = ? AND t2.user_id = ? AND t1.is_archived = 0 ORDER BY t1.list_position ASC',
+    const [lists] = await db.query('SELECT t1.*, t2.role, t3.* FROM list AS t1 JOIN board_user AS t2 ON t1.board_id = t2.board_id JOIN board AS t3 ON t1.board_id = t3.board_id WHERE t1.board_id = ? AND t2.user_id = ? AND t1.is_archived = 0 ORDER BY t1.list_position ASC',
         [board_id, user_id]
     );
 
@@ -306,9 +330,13 @@ exports.getLists = catchAsync(async (req, res) => {
 
     const list_ids = lists.map(l => l.list_id);
 
-    const [cards] = await db.query('SELECT * FROM card WHERE is_archived = 0 list_id IN (?) ORDER BY card_position ASC',
-        [list_ids]
-    );
+    let cards = []; 
+    if (list_ids.length > 0) {
+        const [cardResult] = await db.query('SELECT * FROM card WHERE is_archived = 0 AND list_id IN (?) ORDER BY card_position ASC',
+            [list_ids]
+        );
+        cards = cardResult
+    }
 
     const cardIds = cards.map(c => c.card_id);
 
@@ -496,7 +524,7 @@ exports.deleteCard = catchAsync(async (req, res) => {
 
 //RETRIEVE (CARD INFO)
 exports.getCard = catchAsync(async (req, res) => {
-    const card_id = req.params.card_id || req.body.card_id;
+    const card_id = req.body.card_id;
     const user_id = req.session.user.user_id
 
     const [result] = await db.query('SELECT * FROM card WHERE card_id = ?',
@@ -669,7 +697,7 @@ exports.deleteChecklist = catchAsync(async (req, res) => {
 
 //RETRIEVE
 exports.getChecklist = catchAsync(async (req, res) => {
-    const card_id = req.body.card_id || req.params.card_id
+    const card_id = req.params.card_id
 
     const [result] = await db.query('SELECT * FROM checklist WHERE card_id = ? ORDER BY checklist_position ASC',
         [card_id]
@@ -1629,7 +1657,7 @@ exports.convertCard = catchAsync(async (req, res) => {
 exports.userCard = catchAsync(async (req, res) => {
     const user_id = req.session.user.user_id
 
-    const [result] = await db.query('SELECT t1.card_id, t2.card_name, t2.completed, t2.due_date, t2.due_time, t2.list_id, t2.list_name, t3.board_title, t3.board_id FROM card AS t1 JOIN list AS t2 ON t1.list_id = t2.list_id JOIN board AS t3 ON t2.board_id = t3.board_id JOIN card_member AS t4 ON t1.card_id = t4.card_id WHERE t4.user_id = ? ORDER BY t3.board_id ASC',
+    const [result] = await db.query('SELECT t1.card_id, t1.card_name, t1.completed, t1.due_date, t1.due_time, t2.list_id, t2.list_name, t3.board_title, t3.board_id FROM card AS t1 JOIN list AS t2 ON t1.list_id = t2.list_id JOIN board AS t3 ON t2.board_id = t3.board_id JOIN card_member AS t4 ON t1.card_id = t4.card_id WHERE t4.user_id = ? ORDER BY t3.board_id ASC',
         [user_id]
     );
 
@@ -1663,7 +1691,7 @@ exports.userCard = catchAsync(async (req, res) => {
 exports.userActivity = catchAsync(async (req, res) => {
     const user_id = req.session.user.user_id;
 
-    const [result] = await db.query('SELECT t1.*, t2.board_id, t2.board_title FROM activity_logs AS t1 JOIN board AS t2 ON t1.board_id = t2.board_id WHERE t1.user_id = ? ORDER BY t1.created_at DESC',
+    const [result] = await db.query('SELECT t1.*, t2.board_id, t2.board_title, t3.user_name, t3.user_img_path FROM activity_logs AS t1 JOIN board AS t2 ON t1.board_id = t2.board_id JOIN user AS t3 ON t1.user_id = t3.user_id WHERE t1.user_id = ? ORDER BY t1.created_at DESC',
         [user_id]
     )
 

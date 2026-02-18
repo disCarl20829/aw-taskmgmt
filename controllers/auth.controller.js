@@ -6,8 +6,8 @@ const bcrypt = require('bcrypt');
 const defaultLists = ['To Do', 'In Progress', 'Done'];
 
 exports.check = async (req, res) => {
-    if (req.session.user) return res.status(400).json({ message: "Invalid Action: You are Logged in." });
-    return res.status(200).json({ message: "Not Logged in." });
+    if (req.session.user) return res.status(200).json({ message: "Invalid Action: You are Logged in.", user: req.session.user });
+    return res.status(401).json({ message: "Not Logged in." });
 }
 
 exports.register = async (req, res) => {
