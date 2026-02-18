@@ -191,15 +191,6 @@ const Settings = () => {
                 <div>
                   <div className="d-flex align-items-center gap-2">
                     <h3 className="h5 mb-0 fw-bold">{workspaceName}</h3>
-                    <span
-                      onClick={() => setIsEditingWorkspace(true)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <PencilIcon />
-                    </span>
-                  </div>
-                  <div className="text-secondary" style={{ fontSize: "13px" }}>
-                    Premium <LockIcon size="12" color="#ff5c5c" /> Private
                   </div>
                 </div>
               </div>
@@ -266,17 +257,6 @@ const Settings = () => {
             )}
 
             <div className="w-100 position-relative">
-              <SettingRow
-                title="Workspace visibility"
-                content={
-                  <div>
-                    <LockIcon size="14" color="#ff5c5c" />{" "}
-                    <span style={{ color: "#ff5c5c" }}>Private</span> – This
-                    Workspace is private.
-                  </div>
-                }
-              />
-
               <SettingRow
                 title="Board creation restrictions"
                 icon={<BriefcaseIcon />}
@@ -581,19 +561,6 @@ const LockIcon = ({ size = 14, color = "#ff5c5c" }) => (
 const PeopleIcon = ({ size = 14 }) => (
   <svg width={size} height={size} fill="#fcf809" viewBox="0 0 16 16">
     <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
-  </svg>
-);
-const PencilIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 const BriefcaseIcon = () => (

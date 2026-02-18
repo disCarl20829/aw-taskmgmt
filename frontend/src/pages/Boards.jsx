@@ -15,7 +15,6 @@ import {
   Overlay,
   Modal,
   Dropdown,
-  Card,
 } from "react-bootstrap";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -80,6 +79,9 @@ const Boards = () => {
       });
 
       setShowModal(false);
+
+      const data = res.data;
+      navigate(`/cardboards/${data.board.board_id}`, { replace: true })
     } catch (err) {
       console.error("Create board failed:", err);
     }
@@ -607,8 +609,6 @@ const Boards = () => {
               </div>
 
               <Row className="g-2">
-                <BoardTemplate boards={boards} />
-
                 <Col xs="auto">
                   <div
                     style={createNewBoardStyle}
@@ -618,6 +618,7 @@ const Boards = () => {
                     Create new board
                   </div>
                 </Col>
+                <BoardTemplate boards={boards} />
               </Row>
             </section>
           </Container>

@@ -17,6 +17,8 @@ import CardBoards from "./pages/CardBoards";
 import SettingPage from "./pages/SettingPage";
 import BoardButton from "./pages/BoardButton";
 
+import ProtectedRoute from "./components/ProtectedRoute"
+
 function App() {
   return (
     <BrowserRouter>
@@ -24,18 +26,20 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/set-password" element={<SetPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/boards" element={<Boards />} />
-        <Route path="/members" element={<Members />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/activity" element={<Activity />} />
-        <Route path="/cards" element={<Cards />} />
-        <Route path="/cardBoards/:board_id" element={<CardBoards />} />
-        <Route path="/settingPage" element={<SettingPage />} />
-        <Route path="/boardbutton" element={<BoardButton />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/set-password" element={<SetPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/boards" element={<Boards />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/activity" element={<Activity />} />
+          <Route path="/cards" element={<Cards />} />
+          <Route path="/cardBoards/:board_id" element={<CardBoards />} />
+          <Route path="/settingPage" element={<SettingPage />} />
+          <Route path="/boardbutton" element={<BoardButton />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

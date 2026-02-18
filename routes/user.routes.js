@@ -20,6 +20,8 @@ router.get('/searchBoard/:board_id', userController.searchByBoard);
 router.get('/searchCard/:card_id', userController.searchByCard)
 router.get('/searchChecklist/:item_id', userController.searchByChecklist)
 
+router.patch('/access/', authMiddleware, userController.changeAccess);
+
 //BOARD MEMBER
 router.post('/boardMember/:board_id', authMiddleware, userController.addBoardMember, mailMiddleware)
 router.patch('/boardMember/:board_id', authMiddleware, userController.modifyBoardMember);

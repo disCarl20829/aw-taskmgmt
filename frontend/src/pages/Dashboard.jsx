@@ -76,25 +76,13 @@ const Dashboard = () => {
       });
 
       setShowModal(false);
+
+      const data = res.data;
+      navigate(`/cardboards/${data.board.board_id}`, { replace: true })
     } catch (err) {
       console.error("Create board failed:", err);
     }
   };
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const res = await api.get("/auth/check");
-        setUser(res.data.user);
-      } catch (err) {
-        if (err.response?.status === 401) {
-          navigate("/signin", { replace: true });
-        }
-      }
-    };
-
-    getUser();
-  }, [navigate]);
 
   useEffect(() => {
     const fetchBoards = async () => {
@@ -670,8 +658,6 @@ const Dashboard = () => {
               </div>
 
               <Row className="g-2">
-                <BoardTemplate boards={boards} />
-
                 <Col xs="auto">
                   <div
                     style={createNewBoardStyle}
@@ -681,6 +667,7 @@ const Dashboard = () => {
                     Create new board
                   </div>
                 </Col>
+                <BoardTemplate boards={boards} />
               </Row>
 
               <div className="mt-5">
@@ -987,7 +974,10 @@ const Dashboard = () => {
             </Form.Group>
 
             <Button
-              onClick={handleCreateBoard}
+              onClick={() => {
+                handleCreateBoard();
+                handleCloseModal();
+              }}
               variant="primary"
               className="w-100 fw-bold py-2"
               style={{
