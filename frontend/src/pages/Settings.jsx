@@ -130,7 +130,7 @@ const Settings = () => {
           overflow: "hidden",
         }}
       >
-        {/* X button row — pinned, never scrolls */}
+        {/* X button row — Linked to cardboards/40 */}
         <div
           style={{
             flexShrink: 0,
@@ -140,7 +140,8 @@ const Settings = () => {
             backgroundColor: bgColor,
           }}
         >
-          <button
+          <Link
+            to="/cardboards/40"
             style={{
               width: "32px",
               height: "32px",
@@ -153,13 +154,14 @@ const Settings = () => {
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              textDecoration: "none",
             }}
           >
             <i
               className="bi bi-x-lg"
               style={{ fontSize: "14px", lineHeight: 1 }}
             ></i>
-          </button>
+          </Link>
         </div>
 
         {/* Scrollable content */}

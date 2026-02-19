@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import "bootstrap/dist/css/bootstrap.min.css";
 import api from "../config/api";
 import BoardTemplate from "../components/BoardTemplate";
 
 const Members = () => {
+  const navigate = useNavigate(); // Initialize navigate hook
   const [activeTab, setActiveTab] = useState("members");
   const [showAdminPopover, setShowAdminPopover] = useState(null); // store user_id instead of bool
   const [showLeavePopover, setShowLeavePopover] = useState(false);
@@ -158,6 +159,7 @@ const Members = () => {
             }}
           >
             <button
+              onClick={() => navigate("/cardboards/40")} // Action to connect to that board
               className="btn d-flex align-items-center justify-content-center rounded-circle"
               style={{
                 width: "32px",

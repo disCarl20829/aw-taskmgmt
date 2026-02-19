@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 
 const SettingsPage = () => {
+  const navigate = useNavigate(); // Initialized navigate hook
   const [frequency, setFrequency] = useState("Never");
 
   const handleFrequencyChange = (e) => {
@@ -124,6 +125,7 @@ const SettingsPage = () => {
             }}
           >
             <button
+              onClick={() => navigate("/cardboards/40")} // Action to connect to that board
               className="btn d-flex align-items-center justify-content-center rounded-circle"
               style={{
                 width: "32px",

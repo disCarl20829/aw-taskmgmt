@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/dashboard.css";
@@ -7,6 +7,7 @@ import "../css/dashboard.css";
 import api from "../config/api";
 
 const Activity = () => {
+  const navigate = useNavigate(); // Initialized navigate hook
   const [activity, setActivity] = useState([]);
 
   useEffect(() => {
@@ -206,6 +207,7 @@ const Activity = () => {
             }}
           >
             <button
+              onClick={() => navigate("/cardboards/40")} // Added navigation handler
               style={{
                 width: "32px",
                 height: "32px",
