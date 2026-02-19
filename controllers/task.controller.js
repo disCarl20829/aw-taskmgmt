@@ -16,12 +16,12 @@ exports.createBoard = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const user_id = req.session.user.user_id;
-        const { board_title, board_description, board_visibility } = req.body;
+        const { board_title, board_visibility, board_background } = req.body;
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query('INSERT INTO board (board_title, board_description, board_owner, board_visibility) VALUES (?, ?, ?, ?)',
-            [board_title, board_description, user_id, board_visibility]
+        const [result] = await connection.query('INSERT INTO board (board_title, board_description, board_owner, board_visibility, board_background) VALUES (?, ?, ?, ?, ?)',
+            [board_title, "Welcome to your task manager!", user_id, board_visibility, board_background]
         );
 
         const board_id = result.insertId;
@@ -36,7 +36,15 @@ exports.createBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emit.emitGlobal(req, 'board:created', { board: board[0] })
+        const boardData = {
+            board_id: board[0].board_id,
+            board_title: board[0].board_title,
+            board_owner: board[0].board_owner,
+            board_visibility: board[0].board_visibility,
+            board_background: board[0].board_background,
+        };
+
+        emit.emitGlobal('board:created', { board: board[0] });
         res.json({ message: "Board Successfully Created!", board: board[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -75,7 +83,7 @@ exports.patchBoard = catchAsync(async (req, res) => {
         await connection.commit();
 
         emit.emitBoard(req, 'board:updated', { board_id, board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } })
-        res.json({ message: "Board Patched Successfully!", board: board });
+        res.json({ message: "Board Patched Successfully!", board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } });
     } finally { if (connection) await connection.release() }
 });
 
@@ -118,16 +126,17 @@ exports.deleteBoard = catchAsync(async (req, res) => {
 //RETRIEVE
 exports.getBoards = catchAsync(async (req, res) => {
     const user_id = req.session.user.user_id;
+    const session_user = req.session.user.user_id
 
-    const [result] = await db.query(`SELECT DISTINCT t1.* FROM board AS t1 LEFT JOIN board_user AS t2 ON t1.board_id = t2.board_id AND t2.user_id = ? WHERE t1.board_visibility IN ('public', 'workspace') OR t1.board_owner = ? OR t1.board_visibility = 'private' AND t2.user_id IS NOT NULL`,
-        [user_id, user_id]
+    const [result] = await db.query(`SELECT DISTINCT t1.*, CASE WHEN t1.board_owner = ? THEN true ELSE false END AS isOwner FROM board AS t1 LEFT JOIN board_user AS t2 ON t1.board_id = t2.board_id AND t2.user_id = ? WHERE t1.board_visibility IN ('public', 'workspace') OR t1.board_owner = ? OR t1.board_visibility = 'private' AND t2.user_id IS NOT NULL`,
+        [session_user, user_id, user_id]
     );
 
     res.json({ message: "Boards was Successfully Retrieved!", boards: result })
 });
 
 exports.getUserBoards = catchAsync(async (req, res) => {
-    const {user_id} = req.params;
+    const { user_id } = req.params;
 
     const [result] = await db.query(`SELECT DISTINCT t1.* FROM board AS t1 LEFT JOIN board_user AS t2 ON t1.board_id = t2.board_id AND t2.user_id = ? WHERE t1.board_visibility IN ('public', 'workspace') OR t1.board_owner = ? OR t1.board_visibility = 'private' AND t2.user_id IS NOT NULL`,
         [user_id, user_id]
@@ -136,20 +145,20 @@ exports.getUserBoards = catchAsync(async (req, res) => {
     res.json({ message: "Boards was Successfully Retrieved!", boards: result })
 });
 
-exports.getBoardById = catchAsync (async (req, res) => {
-  const { board_id } = req.params;
-  try {
-    const [rows] = await db.query(
-      'SELECT * FROM board WHERE board_id = ?',
-      [board_id]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ message: 'Board not found' });
+exports.getBoardById = catchAsync(async (req, res) => {
+    const { board_id } = req.params;
+    try {
+        const [rows] = await db.query(
+            'SELECT * FROM board WHERE board_id = ?',
+            [board_id]
+        );
+        if (!rows.length) {
+            return res.status(404).json({ message: 'Board not found' });
+        }
+        res.json({ board: rows[0] });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
-    res.json({ board: rows[0] });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
 });
 
 exports.aboutBoard = catchAsync(async (req, res) => {
@@ -330,7 +339,7 @@ exports.getLists = catchAsync(async (req, res) => {
 
     const list_ids = lists.map(l => l.list_id);
 
-    let cards = []; 
+    let cards = [];
     if (list_ids.length > 0) {
         const [cardResult] = await db.query('SELECT * FROM card WHERE is_archived = 0 AND list_id IN (?) ORDER BY card_position ASC',
             [list_ids]

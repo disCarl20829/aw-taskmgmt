@@ -96,6 +96,66 @@ exports.update = async (req, res) => {
     } finally { if (connection) await connection.release() }
 }
 
+exports.changeAccess = catchAsync(async (req, res) => {
+    let connection;
+
+    try {
+        connection = await db.getConnection();
+
+        const session_user_id = req.session.user.user_id;
+        const { user_id } = req.body;
+
+        await connection.beginTransaction();
+
+        const [adminCheck] = await connection.query("SELECT user_access FROM user WHERE user_id = ? AND user_access = 1",
+            [session_user_id]
+        );
+
+        if (adminCheck.length === 0) {
+            await connection.rollback();
+            return res.status(401).json({ message: "Unauthorized Action!" });
+        }
+
+        const [target] = await connection.query("SELECT user_access FROM user WHERE user_id = ?",
+            [user_id]
+        );
+
+        if (target.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const currentAccess = target[0].user_access;
+        if (currentAccess === 1) {
+            await connection.rollback();
+            return res.status(403).json({ message: "Admins cannot change other admins' roles" });
+        }
+        
+        const newAccess = 1;
+        await connection.query("UPDATE user SET user_access = ? WHERE user_id = ?",
+            [newAccess, user_id]
+        );
+
+
+        await connection.query("UPDATE user SET user_access = ? WHERE user_id = ?",
+            [newAccess, user_id]
+        );
+
+        await connection.commit();
+
+        emit.toBoard(req, "access:updated", { user_id, user_access: newAccess });
+
+        res.json({
+            message: "User access updated",
+            user_id,
+            user_access: newAccess,
+        });
+    } finally {
+        if (connection) await connection.release();
+    }
+});
+
+
 exports.searchUser = catchAsync(async (req, res) => {
     const bar = req.body.bar ?? "";
     const search = `%${bar}%`;
@@ -108,7 +168,11 @@ exports.searchUser = catchAsync(async (req, res) => {
 });
 
 exports.searchAll = catchAsync(async (req, res) => {
-    const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path FROM user");
+    const user_id = req.session.user.user_id
+
+    const [result] = await db.query("SELECT user_id, user_name, user_email, user_img_path, user_access, CASE WHEN user_id = ? THEN true ELSE false END as isUser FROM user",
+        [user_id]
+    );
 
     res.json({ message: "Successfully Retrieved Users!", users: result });
 });
@@ -119,7 +183,7 @@ exports.searchByBoard = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_user AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.board_id = ?',
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, t1.user_access, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isBoard FROM user AS t1 LEFT JOIN board_user AS t2 ON t1.user_id = t2.user_id AND t2.board_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.board_id = ?',
         [board_id, search, search, board_id]
     );
 
@@ -132,7 +196,7 @@ exports.searchByCard = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.card_id = ?',
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, t1.user_access, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isCard FROM user AS t1 LEFT JOIN card_member AS t2 ON t1.user_id = t2.user_id AND t2.card_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.card_id = ?',
         [card_id, search, search, card_id]
     );
 
@@ -145,7 +209,7 @@ exports.searchByChecklist = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.item_id = ?',
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, t1.user_access CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.item_id = ?',
         [item_id, search, search, item_id]
     );
 

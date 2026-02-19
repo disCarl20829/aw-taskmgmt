@@ -1,21 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import "bootstrap/dist/css/bootstrap.min.css";
+
 import api from "../config/api";
 import BoardTemplate from "../components/BoardTemplate";
 
 const Members = () => {
   const navigate = useNavigate(); // Initialize navigate hook
   const [activeTab, setActiveTab] = useState("members");
-  const [showAdminPopover, setShowAdminPopover] = useState(null); // store user_id instead of bool
-  const [showLeavePopover, setShowLeavePopover] = useState(false);
+  const [showAdminPopover, setShowAdminPopover] = useState(null);
+  const popoverRef = useRef(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [openBoardsPopoverId, setOpenBoardsPopoverId] = useState(null);
   const [userBoards, setUserBoards] = useState({});
   const [loadingBoards, setLoadingBoards] = useState(false);
+  const [boardSearch, setBoardSearch] = useState("");
 
-  // ── Fix: added [] so it only runs once, not infinitely ──
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target) &&
+        !event.target.closest(".btn-secondary-custom")
+      ) {
+        setOpenBoardsPopoverId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     const getMembers = async () => {
       try {
@@ -26,35 +41,48 @@ const Members = () => {
       }
     };
     getMembers();
-  }, []); // <-- was missing, causing infinite refetch loop
+  }, []);
 
-  // ── Fix: actually loads boards and stores them correctly ──
-  const handleViewBoards = async (user_id) => {
-    // Toggle off if already open
+  const handleViewBoards = (user_id) => {
+    setShowAdminPopover(null);
+
     if (openBoardsPopoverId === user_id) {
       setOpenBoardsPopoverId(null);
+      setBoardSearch("");
       return;
     }
 
-    // If already fetched, just open
-    if (userBoards[user_id]) {
-      setOpenBoardsPopoverId(user_id);
-      return;
-    }
-
-    // Fetch boards for this user
-    setLoadingBoards(true);
     setOpenBoardsPopoverId(user_id);
+    setBoardSearch("");
+
+    if (!userBoards[user_id]) {
+      setLoadingBoards(true);
+      api
+        .get(`/tasks/getUserBoards/${user_id}`)
+        .then((res) => {
+          setUserBoards((prev) => ({ ...prev, [user_id]: res.data.boards }));
+        })
+        .catch((err) => console.error("Fetching user's boards failed:", err))
+        .finally(() => setLoadingBoards(false));
+    }
+  };
+
+  const handleChangeAccess = async (user_id) => {
     try {
-      const res = await api.get(`/tasks/getUserBoards/${user_id}`);
-      setUserBoards((prev) => ({
-        ...prev,
-        [user_id]: res.data.boards,
-      }));
+      await api.patch("/user/access/", { user_id });
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.user_id === user_id
+            ? { ...u, user_access: u.user_access === 1 ? 0 : 1 }
+            : u,
+        ),
+      );
+
+      setShowAdminPopover(null);
     } catch (err) {
-      console.error("Fetching user's boards failed: ", err);
-    } finally {
-      setLoadingBoards(false);
+      console.error("Failed to change user access:", err);
+      alert("Failed to update user access");
     }
   };
 
@@ -72,8 +100,25 @@ const Members = () => {
         .tab-item:hover { background-color: #333c44; color: #fff; }
         .tab-item.active { background-color: rgba(87,157,255,0.16); color: #579dff; font-weight: 600; }
         .avatar { width: 36px; height: 36px; background: linear-gradient(#e2b203, #ff9f1a); color: #1d2125; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.75rem; flex-shrink: 0; }
-        .btn-secondary-custom { background-color: #282e33; border: 1px solid #3d444d; color: #9fadbc; font-size: 0.8rem; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* ── Shared button style for both "View boards" and role button ── */
+        .btn-secondary-custom {
+          background-color: #282e33;
+          border: 1px solid #3d444d;
+          color: #9fadbc;
+          font-size: 0.8rem;
+          text-align: center;
+          width: 100px;
+          padding: 5px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
         .btn-secondary-custom:hover { background-color: #333c44; color: #fff; }
+
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background-color: #282e33; border-radius: 12px; width: 90%; max-width: 600px; padding: 0; position: relative; }
         .modal-header { padding: 20px 24px; border-bottom: 1px solid #3d444d; display: flex; justify-content: space-between; align-items: center; }
@@ -199,21 +244,6 @@ const Members = () => {
               >
                 Collaborators ({users.length})
               </h5>
-              <button
-                onClick={() => setShowInviteModal(true)}
-                style={{
-                  backgroundColor: "#579dff",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: "0.85rem",
-                  fontWeight: 500,
-                  padding: "6px 14px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Invite Workspace members
-              </button>
             </div>
 
             <div style={{ display: "flex", gap: "24px" }}>
@@ -303,6 +333,7 @@ const Members = () => {
                             position: "relative",
                           }}
                         >
+                          {/* Left: avatar + name/email */}
                           <div
                             style={{
                               display: "flex",
@@ -327,151 +358,206 @@ const Members = () => {
                             </div>
                           </div>
 
+                          {/* Right: view boards + role button — both same style */}
                           <div
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              gap: "8px",
+                              gap: "10px",
                               position: "relative",
                             }}
                           >
-                            {/* View Boards */}
+                            {/* View Boards button */}
                             <button
                               className="btn-secondary-custom"
-                              onClick={() => handleViewBoards(user.user_id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewBoards(user.user_id);
+                              }}
                             >
                               {openBoardsPopoverId === user.user_id
                                 ? "Hide boards"
                                 : "View boards"}
                             </button>
 
+                            {/* Boards popover */}
                             {openBoardsPopoverId === user.user_id && (
                               <div
+                                ref={popoverRef}
                                 style={{
                                   position: "absolute",
                                   backgroundColor: "#282e33",
                                   border: "1px solid #3d444d",
                                   borderRadius: "8px",
-                                  width: "300px",
+                                  maxHeight: "300px",
+                                  width: "425px",
                                   padding: "16px",
+                                  paddingRight: "8px",
                                   top: "36px",
-                                  right: "0px",
+                                  right: "120px",
                                   zIndex: 1000,
+                                  overflowY: "auto",
+                                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                                 }}
                               >
-                                {loadingBoards ? (
-                                  <p
-                                    style={{
-                                      color: "#9fadbc",
-                                      fontSize: "0.85rem",
-                                      margin: 0,
-                                    }}
-                                  >
-                                    Loading boards...
-                                  </p>
-                                ) : userBoards[user.user_id]?.length > 0 ? (
-                                  <BoardTemplate
-                                    boards={userBoards[user.user_id]}
-                                  />
-                                ) : (
-                                  <p
-                                    style={{
-                                      color: "#9fadbc",
-                                      fontSize: "0.85rem",
-                                      margin: 0,
-                                    }}
-                                  >
-                                    No boards found.
-                                  </p>
-                                )}
+                                <input
+                                  type="text"
+                                  placeholder="Search boards..."
+                                  value={boardSearch}
+                                  onChange={(e) =>
+                                    setBoardSearch(e.target.value)
+                                  }
+                                  style={{
+                                    backgroundColor: "#282e33",
+                                    border: "1px solid #3d444d",
+                                    color: "#9fadbc",
+                                    fontSize: "0.85rem",
+                                    padding: "6px 12px",
+                                    borderRadius: "4px",
+                                    width: "100%",
+                                    marginBottom: "12px",
+                                  }}
+                                />
+                                <Row className="g-3">
+                                  {loadingBoards ? (
+                                    <p
+                                      style={{
+                                        color: "#9fadbc",
+                                        fontSize: "0.85rem",
+                                        margin: 0,
+                                      }}
+                                    >
+                                      Loading boards...
+                                    </p>
+                                  ) : userBoards[user.user_id]?.length > 0 ? (
+                                    <BoardTemplate
+                                      boards={userBoards[user.user_id].filter(
+                                        (b) =>
+                                          b.board_title
+                                            .toLowerCase()
+                                            .includes(
+                                              boardSearch.toLowerCase(),
+                                            ),
+                                      )}
+                                    />
+                                  ) : (
+                                    <p
+                                      style={{
+                                        color: "#9fadbc",
+                                        fontSize: "0.85rem",
+                                        margin: 0,
+                                      }}
+                                    >
+                                      No boards found.
+                                    </p>
+                                  )}
+                                </Row>
                               </div>
                             )}
 
-                            {/* Admin */}
+                            {/* ── Role button — same style as "View boards" ── */}
                             <button
                               className="btn-secondary-custom"
-                              onClick={() =>
+                              disabled={user.user_access === 1}
+                              onClick={(e) => {
+                                if (user.user_access === 1) return;
+
+                                e.stopPropagation();
+                                setOpenBoardsPopoverId(null);
                                 setShowAdminPopover(
                                   showAdminPopover === user.user_id
                                     ? null
                                     : user.user_id,
-                                )
+                                );
+                              }}
+                              title={
+                                user.user_access === 1
+                                  ? "Admins cannot change other admins' roles"
+                                  : "Change permissions"
                               }
+                              style={{
+                                opacity: user.user_access === 1 ? 0.5 : 1,
+                                cursor:
+                                  user.user_access === 1
+                                    ? "not-allowed"
+                                    : "pointer",
+                              }}
                             >
-                              Admin ▾
+                              {user.user_access === 1 ? (
+                                <>
+                                  <i className="bi bi-shield-fill-check"></i>{" "}
+                                  Admin
+                                </>
+                              ) : (
+                                <>
+                                  <i className="bi bi-person-fill"></i> User
+                                </>
+                              )}
+                              <i
+                                className="bi bi-chevron-down"
+                                style={{ fontSize: "0.6rem", opacity: 0.6 }}
+                              ></i>
                             </button>
-                            {showAdminPopover === user.user_id && (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  backgroundColor: "#282e33",
-                                  border: "1px solid #3d444d",
-                                  borderRadius: "8px",
-                                  width: "300px",
-                                  zIndex: 1001,
-                                  right: "100px",
-                                  top: "-120px",
-                                  overflow: "hidden",
-                                }}
-                              >
+
+                            {/* Permissions popover */}
+                            {showAdminPopover === user.user_id &&
+                              user.user_access === 0 && (
                                 <div
                                   style={{
-                                    padding: "12px 16px",
-                                    borderBottom: "1px solid #3d444d",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
+                                    position: "absolute",
+                                    backgroundColor: "#282e33",
+                                    border: "1px solid #3d444d",
+                                    borderRadius: "8px",
+                                    width: "175px",
+                                    zIndex: 1001,
+                                    right: "0",
+                                    top: "36px",
+                                    overflow: "hidden",
+                                    boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                                   }}
                                 >
-                                  <span
+                                  <div
                                     style={{
+                                      padding: "12px 16px",
+                                      borderBottom: "1px solid #3d444d",
                                       fontWeight: 700,
                                       fontSize: "0.85rem",
                                       color: "#9fadbc",
-                                      flex: 1,
                                       textAlign: "center",
                                     }}
                                   >
                                     Change permissions
-                                  </span>
-                                  <span
-                                    style={{
-                                      cursor: "pointer",
-                                      color: "#9fadbc",
-                                    }}
-                                    onClick={() => setShowAdminPopover(null)}
-                                  >
-                                    ✕
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    padding: "12px 16px",
-                                    backgroundColor: "rgba(255,255,255,0.04)",
-                                  }}
-                                >
-                                  <p
-                                    style={{
-                                      fontSize: "0.85rem",
-                                      color: "#9fadbc",
-                                      margin: 0,
-                                    }}
-                                  >
-                                    You can't change roles because there must be
-                                    at least one admin.
-                                  </p>
-                                </div>
-                              </div>
-                            )}
+                                  </div>
 
-                            <button
-                              className="btn-secondary-custom"
-                              onClick={() =>
-                                setShowLeavePopover(!showLeavePopover)
-                              }
-                            >
-                              Leave... ✕
-                            </button>
+                                  <button
+                                    style={{
+                                      width: "100%",
+                                      background: "none",
+                                      border: "none",
+                                      padding: "12px 16px",
+                                      textAlign: "left",
+                                      color: "#9fadbc",
+                                      fontSize: "0.85rem",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={() =>
+                                      handleChangeAccess(user.user_id)
+                                    }
+                                  >
+                                    {user.user_access === 1 ? (
+                                      <>
+                                        <i className="bi bi-person-fill me-2"></i>
+                                        User
+                                      </>
+                                    ) : (
+                                      <>
+                                        <i className="bi bi-shield-fill-check me-2"></i>
+                                        Admin
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              )}
                           </div>
                         </div>
                       ))
@@ -621,7 +707,7 @@ const Members = () => {
           </main>
         </div>
 
-        {/* Invite Modal */}
+        {/* ── Invite Modal ── */}
         {showInviteModal && (
           <div
             className="modal-overlay"

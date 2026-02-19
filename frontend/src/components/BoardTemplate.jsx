@@ -1,9 +1,8 @@
-// BoardTemplate.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Row, Col } from "react-bootstrap";
+import { Col } from "react-bootstrap";
 
-const BoardTemplate = ({ boards = [] }) => {
+const BoardTemplate = ({ boards = [], showSharedPill = false }) => {
   const navigate = useNavigate();
 
   const boardTileStyle = {
@@ -27,7 +26,59 @@ const BoardTemplate = ({ boards = [] }) => {
     color: "#fff",
     fontWeight: "600",
     fontSize: "0.9rem",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   };
+
+  // Visibility icon — top right
+  const VisibilityBadge = ({ visibility }) => {
+    const iconMap = {
+      private:   { icon: "bi-lock-fill",   title: "Private"   },
+      public:    { icon: "bi-globe",        title: "Public"    },
+      workspace: { icon: "bi-people-fill",  title: "Workspace" },
+    };
+    const entry = iconMap[visibility];
+    if (!entry) return null;
+    return (
+      <div
+        title={entry.title}
+        style={{
+          position: "absolute",
+          top: "6px",
+          right: "8px",
+          color: "rgba(255,255,255,0.85)",
+          fontSize: "0.68rem",
+        }}
+      >
+        <i className={`bi ${entry.icon}`}></i>
+      </div>
+    );
+  };
+
+  // Shared pill — top left (only rendered when showSharedPill is true)
+  const SharedPill = () => (
+    <div
+      style={{
+        position: "absolute",
+        top: "6px",
+        left: "8px",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(3px)",
+        color: "#cfe2ff",
+        fontSize: "0.65rem",
+        fontWeight: "700",
+        padding: "2px 7px",
+        borderRadius: "20px",
+        display: "flex",
+        alignItems: "center",
+        gap: "3px",
+      }}
+    >
+      <i className="bi bi-person-fill" style={{ fontSize: "0.6rem" }}></i>
+      Shared
+    </div>
+  );
 
   return (
     <>
@@ -38,26 +89,34 @@ const BoardTemplate = ({ boards = [] }) => {
         }
       `}</style>
 
-      <Row className="g-2">
-        {boards.length > 0 ? (
-          boards.map((board) => (
-            <Col xs="auto" key={board.board_id}>
-              <div
-                style={{
-                  ...boardTileStyle,
-                  backgroundColor: board.board_background || "#0079bf",
-                }}
-                className="board-tile-hover"
-                onClick={() => navigate(`/cardboards/${board.board_id}`)}
-              >
-                <div style={boardTitleOverlayStyle}>{board.board_title}</div>
+      {boards.length > 0 ? (
+        boards.map((board) => (
+          <Col xs="auto" key={board.board_id}>
+            <div
+              style={{
+                ...boardTileStyle,
+                backgroundColor: board.board_background || "#0079bf",
+              }}
+              className="board-tile-hover"
+              onClick={() => navigate(`/cardboards/${board.board_id}`)}
+            >
+              <VisibilityBadge visibility={board.board_visibility} />
+
+              {showSharedPill && <SharedPill />}
+
+              <div style={boardTitleOverlayStyle}>
+                {board.board_title}
               </div>
-            </Col>
-          ))
-        ) : (
-          <div className="text-secondary">No boards found.</div>
-        )}
-      </Row>
+            </div>
+          </Col>
+        ))
+      ) : (
+        <Col>
+          <div className="text-secondary" style={{ fontSize: "0.82rem", fontStyle: "italic" }}>
+            No boards found.
+          </div>
+        </Col>
+      )}
     </>
   );
 };
