@@ -136,11 +136,6 @@ exports.changeAccess = catchAsync(async (req, res) => {
             [newAccess, user_id]
         );
 
-
-        await connection.query("UPDATE user SET user_access = ? WHERE user_id = ?",
-            [newAccess, user_id]
-        );
-
         await connection.commit();
 
         emit.toBoard(req, "access:updated", { user_id, user_access: newAccess });
@@ -209,7 +204,7 @@ exports.searchByChecklist = catchAsync(async (req, res) => {
 
     const search = `%${bar}%`;
 
-    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, t1.user_access CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.item_id = ?',
+    const [result] = await db.query('SELECT DISTINCT t1.user_id, t1.user_name, t1.user_email, t1.user_img_path, t1.user_access, CASE WHEN t2.user_id IS NOT NULL THEN true ELSE false END AS isAssigned FROM user AS t1 LEFT JOIN assigned_checklist AS t2 ON t1.user_id = t2.user_id AND t2.item_id = ? WHERE (t1.user_name LIKE ? OR t1.user_email LIKE ?) AND t2.item_id = ?',
         [item_id, search, search, item_id]
     );
 
@@ -556,22 +551,25 @@ exports.publishComment = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [row] = await connection.query('SELECT * FROM card WHERE card_id = ?',
-            [card_id]
-        )
+const [row] = await connection.query(
+    'SELECT c.*, l.board_id FROM card c JOIN list l ON c.list_id = l.list_id WHERE c.card_id = ?',
+    [card_id]
+)
 
         if (row.length === 0) {
             await connection.rollback();
             return res.status(400).json({ message: "Unable to Find Card" });
         }
 
-        await connection.query('INSERT INTO comments (card_id, user_id, description) VALUES (?, ?, ?)',
-            [card_id, user_id, description]
-        )
+await connection.query('INSERT INTO comments (card_id, user_id, comment) VALUES (?, ?, ?)',
+    [card_id, user_id, description]
+)
 
         await connection.commit();
 
-        emit.toBoard(board_id, 'comment-added', { card_id, comment });
+        const board_id = row[0].board_id;
+
+emit.toBoard(board_id, 'comment-added', { card_id, comment: description });
         res.json({ message: "Comment Successful!" });
     } finally { if (connection) await connection.release() }
 })
@@ -583,7 +581,7 @@ exports.editComment = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const user_id = req.session.user.user_id;
-        const { comment_id, description } = req.body;
+        const { comment_id, description, board_id } = req.body;
 
         await connection.beginTransaction();
 
@@ -615,7 +613,7 @@ exports.deleteComment = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const user_id = req.session.user.user_id;
-        const { comment_id } = req.body;
+        const { comment_id, description, board_id } = req.body;
 
         await connection.beginTransaction();
 
@@ -642,7 +640,7 @@ exports.deleteComment = catchAsync(async (req, res) => {
 exports.getComment = catchAsync(async (req, res) => {
     const { card_id } = req.params;
 
-    const [comments] = await db.query('SELECT * FROM comments WHERE card_id = ? ORDER BY comment_created ASC',
+    const [comments] = await db.query('SELECT * FROM comments WHERE card_id = ? ORDER BY created_at ASC',
         [card_id]
     )
 

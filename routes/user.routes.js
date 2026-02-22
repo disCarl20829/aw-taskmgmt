@@ -36,7 +36,7 @@ router.post('/checklist/:board_id/:card_id/:item_id', protect, userController.as
 router.delete('/checklist/:board_id/:card_id/:item_id', protect, userController.unassignMember);
 
 //COMMENT CARD
-router.post('/comment/', protect, userController.publishComment);
+router.post('/comment/', authMiddleware, userController.publishComment);
 router.patch('/comment/', authMiddleware, userController.editComment);
 router.delete('/comment/', authMiddleware, userController.deleteComment);
 router.get('/comment/:card_id', protect, userController.getComment);

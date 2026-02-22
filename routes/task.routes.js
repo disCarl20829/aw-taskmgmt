@@ -42,10 +42,10 @@ router.delete('/checklists/:checklist_id', protect, taskController.deleteCheckli
 router.get('/checklists/:card_id', protect, taskController.getChecklist);
 
 //ARCHIVE
-router.patch('archiveList/:board_id/:list_id', protect, taskController.archiveList);
-router.get('archiveList/:board_id', protect, taskController.getArchivedList);
-router.patch('archiveCard/:board_id/:card_id', protect, taskController.archiveCard);
-router.get('archiveList/:board_id', protect, taskController.getArchivedCard);
+router.patch('/archiveList/:board_id/:list_id', protect, taskController.archiveList);
+router.get('/archiveList/:board_id', protect, taskController.getArchivedList);
+router.patch('/archiveCard/:board_id/:card_id', protect, taskController.archiveCard);
+router.get('/archiveCard/:board_id', protect, taskController.getArchivedCard);
 
 //-----UTILITIES ADD-----\\\
 

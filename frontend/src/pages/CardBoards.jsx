@@ -418,18 +418,28 @@ const CardBoards = () => {
       </Popover.Header>
       <Popover.Body className="p-0 bg-dark">
         <div className="d-flex align-items-center p-3 gap-2">
-          <div className="avatar-circle bg-info">
-            {user ? (user.username?.[0]?.toUpperCase() ?? "U") : "U"}
+          {/* AVATAR: Pulls first letter of email or name */}
+          <div
+            className="avatar-circle bg-info text-white d-flex align-items-center justify-content-center"
+            style={{ width: "40px", height: "40px", borderRadius: "50%" }}
+          >
+            {user?.user_name ? user.user_name.charAt(0).toUpperCase() : "G"}
           </div>
+
           <div>
+            {/* USERNAME: Displays user_name from your DB */}
             <div className="fw-bold text-light">
-              {user?.username || "User123"}
+              {user?.user_name || "Guest User"}
             </div>
+            {/* EMAIL: Displays user_email from your DB */}
             <div className="text-secondary small">
-              @{user?.username?.toLowerCase() || "user123"}
+              {user?.user_email || "Not signed in"}
             </div>
           </div>
         </div>
+        <hr className="m-0 border-secondary" />
+        {/* Add a Logout button here to clear the session */}
+
         <ListGroup variant="flush" className="account-list">
           <ListGroup.Item
             action
@@ -475,21 +485,8 @@ const CardBoards = () => {
     </Popover>
   );
 
-  // ── Loading state ──
   if (boardLoading) {
-    return (
-      <div
-        className="d-flex align-items-center justify-content-center"
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#1d2125",
-          color: "#fff",
-        }}
-      >
-        <div className="spinner-border text-primary me-2" role="status" />
-        <span>Loading board...</span>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   const boardTitle = board?.board_title || "My board";

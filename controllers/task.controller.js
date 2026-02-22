@@ -8,6 +8,15 @@ const messageHandler = require('../utilities/message.handler')
 const duplicateAttachmentFile = require('../utilities/attachment.storage');
 const emit = require('../utilities/socket');
 
+// ── Helper: wraps emit.toBoard so callers can use emitBoard(req, board_id, event, data)
+const emitBoard = (board_id, event, data) => {
+    try {
+        emit.toBoard(board_id, event, data);
+    } catch (err) {
+        console.error('emitBoard failed:', err.message);
+    }
+};
+
 //CREATE
 exports.createBoard = catchAsync(async (req, res) => {
     let connection;
@@ -36,14 +45,6 @@ exports.createBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        const boardData = {
-            board_id: board[0].board_id,
-            board_title: board[0].board_title,
-            board_owner: board[0].board_owner,
-            board_visibility: board[0].board_visibility,
-            board_background: board[0].board_background,
-        };
-
         emit.emitGlobal('board:created', { board: board[0] });
         res.json({ message: "Board Successfully Created!", board: board[0] });
     } finally { if (connection) await connection.release() }
@@ -57,7 +58,6 @@ exports.patchBoard = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const board_id = req.params.board_id;
-        //const user_id = req.session.user.user_id;
         const { board_title, board_description, board_background, board_visibility } = req.body;
 
         await connection.beginTransaction();
@@ -82,7 +82,7 @@ exports.patchBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emit.emitBoard(req, 'board:updated', { board_id, board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } })
+        emitBoard(board_id, 'board:updated', { board_id, board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } });
         res.json({ message: "Board Patched Successfully!", board: { board_title: updatedTitle, board_description: updatedDescription, board_background: updatedBackground } });
     } finally { if (connection) await connection.release() }
 });
@@ -118,7 +118,7 @@ exports.deleteBoard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emit.emitGlobal(req, 'board:deleted', { board_id })
+        emitBoard(board_id, 'board:deleted', { board_id });
         res.json({ message: "Board was Deleted Successfully!", board: board });
     } finally { if (connection) await connection.release() }
 });
@@ -168,7 +168,7 @@ exports.aboutBoard = catchAsync(async (req, res) => {
     let about = {};
 
     const [board] = await db.query('SELECT * FROM board WHERE board_id = ?',
-        board_id
+        [board_id]
     )
 
     if (board.length === 0) {
@@ -217,25 +217,24 @@ exports.boardBackground = catchAsync(async (req, res) => {
             [background, board_id]
         )
 
-        const oldBg = board[0].board_background
+        const oldBg = board[0].board_background;
 
         await connection.commit();
 
         if (oldBg && oldBg !== background) {
-            if (!oldBg || oldBg.startsWith('#')) return;
+            if (!oldBg || oldBg.startsWith('#')) return res.json({ message: "Placed Background for Board Successfully!" });
 
             const fullPath = path.join(__dirname, '../public', oldBg);
             fs.unlink(fullPath)
                 .catch(err => console.error("Background Deletion Failed!", err))
         }
 
-        emitBoard(req, board_id, 'board:background-updated', { board_id, backgroundF });
+        emitBoard(board_id, 'board:background-updated', { board_id, background });
         res.json({ message: "Placed Background for Board Successfully!" })
     } finally { if (connection) await connection.release() }
 })
 
-//-----LISTS HANDLING-----\\ 
-// ONLY DO REFRESH INSTEAD OF RETURNING ARRAY
+//-----LISTS HANDLING-----\\
 
 //CREATE
 exports.createList = catchAsync(async (req, res) => {
@@ -261,7 +260,7 @@ exports.createList = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'list:created', { list: list[0] });
+        emitBoard(board_id, 'list:created', { list: list[0] });
         res.json({ message: "List Created Successfully!", list: list[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -288,7 +287,7 @@ exports.patchList = catchAsync(async (req, res) => {
         }
 
         const updatedName = list_name && list_name.trim() !== '' ? list_name : row[0].list_name;
-        const updatedColor = list_color && list_color.trim() !== '' ? list_color : row[0].list_color;
+        const updatedColor = list_color !== undefined ? list_color : row[0].list_color;
         const updatedPosition = list_position !== undefined && list_position !== null ? list_position : row[0].list_position;
 
         await connection.query('UPDATE list SET list_name = ?, list_color = ?, list_position = ? WHERE list_id = ?',
@@ -297,7 +296,7 @@ exports.patchList = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, row[0].board_id, 'list:updated', { list_id, list: { list_name: updatedName, list_color: updatedColor, list_position: updatedPosition } });
+        emitBoard(row[0].board_id, 'list:updated', { list_id, list: { list_name: updatedName, list_color: updatedColor, list_position: updatedPosition } });
         res.json({ message: "List Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -313,13 +312,17 @@ exports.deleteList = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
+        // Get board_id before deleting
+        const [listRow] = await connection.query('SELECT board_id FROM list WHERE list_id = ?', [list_id]);
+        const board_id = listRow[0]?.board_id;
+
         await connection.query('DELETE FROM list WHERE list_id = ?',
             [list_id]
         )
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'list:deleted', { list_id });
+        if (board_id) emitBoard(board_id, 'list:deleted', { list_id });
         res.json({ message: "List was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -399,7 +402,6 @@ exports.getLists = catchAsync(async (req, res) => {
 });
 
 //-----CARD HANDLING-----\\
-// ONLY DO REFRESH INSTEAD OF RETURNING ARRAY
 
 //CREATE
 exports.createCard = catchAsync(async (req, res) => {
@@ -411,6 +413,10 @@ exports.createCard = catchAsync(async (req, res) => {
         const { list_id, card_name, card_description, card_position, due_date, due_time } = req.body;
 
         await connection.beginTransaction();
+
+        // Resolve board_id from list
+        const [listRow] = await connection.query('SELECT board_id FROM list WHERE list_id = ?', [list_id]);
+        const board_id = listRow[0]?.board_id;
 
         const [result] = await connection.query('INSERT INTO card (list_id, card_name, card_description, card_position, due_date, due_time) VALUES (?, ?, ?, ?, ?, ?)',
             [list_id, card_name, card_description, card_position, due_date, due_time]
@@ -424,7 +430,7 @@ exports.createCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'card:created', { card: card[0] });
+        if (board_id) emitBoard(board_id, 'card:created', { card: card[0] });
         res.json({ message: "Card Created Successfully!", card: card[0] })
     } finally { if (connection) await connection.release() }
 });
@@ -452,7 +458,7 @@ exports.patchCard = catchAsync(async (req, res) => {
         }
 
         const updatedName = card_name && card_name.trim() !== '' ? card_name : row[0].card_name;
-        const updatedDescription = card_description && card_description.trim() !== '' ? card_description : row[0].card_description;
+        const updatedDescription = card_description !== undefined ? card_description : row[0].card_description;
         const updatedPosition = card_position !== undefined ? card_position : row[0].card_position;
         const updatedDate = due_date !== undefined ? due_date : row[0].due_date;
         const updatedTime = due_time !== undefined ? due_time : row[0].due_time;
@@ -462,33 +468,36 @@ exports.patchCard = catchAsync(async (req, res) => {
             [updatedName, updatedDescription, updatedPosition, updatedDate, updatedTime, updatedCompleted, card_id]
         );
 
-        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
+        // Only log due-date activity when due_date/time fields are explicitly sent
+        if (due_date !== undefined || due_time !== undefined) {
+            const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
-        const hasInput = due_date !== '' && due_time !== '';
-        const hadDue = row[0].due_date !== null && row[0].due_time !== null;
+            const hasInput = due_date !== '' && due_time !== '';
+            const hadDue = row[0].due_date !== null && row[0].due_time !== null;
 
-        let actionType;
-        let actionData
-        if (hasInput && !hadDue) {
-            actionType = 'SET_DUE';
-            actionData = JSON.stringify({ user: actor.user_name, date: due_date, time: due_time });
-        } else if (hasInput && hadDue) {
-            actionType = 'CHANGED_DUE';
-            actionData = JSON.stringify({ user: actor.user_name, date: due_date, time: due_time });
-        } else {
-            actionType = 'REMOVED_DUE';
-            actionData = JSON.stringify({ user: actor.user_name });
-        }
+            let actionType;
+            let actionData;
+            if (hasInput && !hadDue) {
+                actionType = 'SET_DUE';
+                actionData = JSON.stringify({ user: actor.user_name, date: due_date, time: due_time });
+            } else if (hasInput && hadDue) {
+                actionType = 'CHANGED_DUE';
+                actionData = JSON.stringify({ user: actor.user_name, date: due_date, time: due_time });
+            } else {
+                actionType = 'REMOVED_DUE';
+                actionData = JSON.stringify({ user: actor.user_name });
+            }
 
-        if (actionType) {
-            await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
-                [actor.user_id, board_id, card_id, actionType, actionData]
-            )
+            if (actionType && board_id) {
+                await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
+                    [actor.user_id, board_id, card_id, actionType, actionData]
+                )
+            }
         }
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'card:updated', { card_id, card: { card_name: updatedName, card_description: updatedDescription, card_position: updatedPosition, completed: updatedCompleted } });
+        if (board_id) emitBoard(board_id, 'card:updated', { card_id, card: { card_name: updatedName, card_description: updatedDescription, card_position: updatedPosition, completed: updatedCompleted } });
         res.json({ message: "Card Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -504,7 +513,7 @@ exports.deleteCard = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [result] = await connection.query('SELECT * FROM card WHERE card_id = ?',
+        const [result] = await connection.query('SELECT t1.*, t2.board_id FROM card AS t1 JOIN list AS t2 ON t1.list_id = t2.list_id WHERE t1.card_id = ?',
             [card_id]
         );
 
@@ -512,6 +521,8 @@ exports.deleteCard = catchAsync(async (req, res) => {
             await connection.rollback();
             return res.status(404).json({ message: "Card Not Found!" });
         }
+
+        const board_id = result[0].board_id;
 
         const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?',
             [card_id]
@@ -526,14 +537,14 @@ exports.deleteCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'card:deleted', { card_id });
+        emitBoard(board_id, 'card:deleted', { card_id });
         res.json({ message: "Card was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
 
 //RETRIEVE (CARD INFO)
 exports.getCard = catchAsync(async (req, res) => {
-    const card_id = req.body.card_id;
+    const card_id = req.params.card_id || req.body.card_id;
     const user_id = req.session.user.user_id
 
     const [result] = await db.query('SELECT * FROM card WHERE card_id = ?',
@@ -554,17 +565,17 @@ exports.getCard = catchAsync(async (req, res) => {
         [card_id]
     );
 
-    const [logs] = await db.query('SELECT t1.log_id AS id, t1.card_id, t1.action AS content, t1.created_at AS date, "activity" AS type, CASE WHEN t1.user_id = ? THEN 1 ELSE 0 END AS isUser FROM activity_logs AS t1 WHERE t1.card_id = ? UNION ALL SELECT t2.comment_id AS id, t2.card_id, t2.comment AS content, t2.created_at AS date, "comment" AS type, CASE WHEN t2.user_id = ? THEN 1 ELSE 0 END AS isUser FROM comments AS t2 WHERE t2.card_id = ? ORDER BY date DESC',
-        [user_id, card_id, user_id, card_id]
-    );
+const [logs] = await db.query('SELECT t1.log_id AS id, t1.card_id, t1.action_type AS content, t1.created_at AS date, "activity" AS type, CASE WHEN t1.user_id = ? THEN 1 ELSE 0 END AS isUser FROM activity_logs AS t1 WHERE t1.card_id = ? UNION ALL SELECT t2.comment_id AS id, t2.card_id, t2.description AS content, t2.comment_created AS date, "comment" AS type, CASE WHEN t2.user_id = ? THEN 1 ELSE 0 END AS isUser FROM comments AS t2 WHERE t2.card_id = ? ORDER BY date DESC',
+    [user_id, card_id, user_id, card_id]
+);
 
     const activities = logs
         .filter(row => row.type === 'activity')
-        .map(buildActivity);
+        .map(row => messageHandler.buildActivity(row));
 
     const comments = logs
         .filter(row => row.type === 'comment')
-        .map(row => ({ comment_id: row.log_id, card_id: row.card_id, created_at: row.created_at, isUser: !!row.isUser, type: 'comment', content: row.action_data || row.actionType || null }));
+        .map(row => ({ comment_id: row.id, card_id: row.card_id, created_at: row.date, isUser: !!row.isUser, type: 'comment', content: row.content }));
 
     const [checklists] = await db.query('SELECT * FROM checklist WHERE card_id = ?',
         [card_id]
@@ -583,7 +594,7 @@ exports.getCard = catchAsync(async (req, res) => {
     card.labels = labels;
     card.activities = activities;
     card.comments = comments;
-    card.items = checklists;
+    card.checklists = checklists;
 
     res.json({ message: "Cards were Retrieved", card: card })
 });
@@ -608,12 +619,10 @@ exports.createChecklist = catchAsync(async (req, res) => {
             [card_id, checklist_title]
         )
 
-        const actor = await messageHandler.getUser(req.session.user.user_id);
-
-        const actorName = req.session.user.user_id === user_id ? "self" : actor.user_name;
+        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
-            [actor.user_id, board_id, card_id, 'CREATED_CHECKLIST', JSON.stringify({ user: actorName })]
+            [actor.user_id, board_id, card_id, 'CREATED_CHECKLIST', JSON.stringify({ user: actor.user_name })]
         )
 
         const checklist_id = result.insertId;
@@ -624,7 +633,7 @@ exports.createChecklist = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'checklist:created', { checklist: checklist[0] });
+        emitBoard(board_id, 'checklist:created', { checklist: checklist[0] });
         res.json({ message: "Checklist Created Successfully!", checklist: checklist[0] })
     } catch (err) {
         if (connection) await connection.rollback();
@@ -641,7 +650,7 @@ exports.patchChecklist = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const checklist_id = req.body.checklist_id || req.params.checklist_id;
-        const { checklist_title, checklist_position } = req.body;
+        const { checklist_title, checklist_position, board_id } = req.body;
 
         await connection.beginTransaction();
 
@@ -667,7 +676,7 @@ exports.patchChecklist = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'checklist:updated', { checklist_id, changes: { checklist_title: updatedTitle, checklist_position: updatedPosition } });
+        if (board_id) emitBoard(board_id, 'checklist:updated', { checklist_id, changes: { checklist_title: updatedTitle, checklist_position: updatedPosition } });
         res.json({ message: "Checklist Patched Successfully!", checklist: checklist[0] });
     } finally { if (connection) await connection.release() }
 });
@@ -680,6 +689,7 @@ exports.deleteChecklist = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const checklist_id = req.params.checklist_id || req.body.checklist_id;
+        const board_id = req.body.board_id;
 
         await connection.beginTransaction();
 
@@ -691,14 +701,10 @@ exports.deleteChecklist = catchAsync(async (req, res) => {
             [checklist_id]
         )
 
-        const [checklist] = await connection.query('SELECT * FROM checklist WHERE checklist_id = ?',
-            [checklist_id]
-        );
-
         await connection.commit();
 
-        emitBoard(req, board_id, 'checklist:deleted', { checklist_id });
-        res.json({ message: "Checklist was Deleted Successfully!", checklist });
+        if (board_id) emitBoard(board_id, 'checklist:deleted', { checklist_id });
+        res.json({ message: "Checklist was Deleted Successfully!" });
     } finally {
         if (connection) await connection.release();
     }
@@ -741,7 +747,6 @@ exports.getChecklist = catchAsync(async (req, res) => {
 });
 
 //-----ITEM (CHECKLIST) HANDLING-----\\
-// DO REFRESH FOR DELETE
 
 //CREATE
 exports.addItem = catchAsync(async (req, res) => {
@@ -771,7 +776,7 @@ exports.addItem = catchAsync(async (req, res) => {
             return res.status(403).json({ message: "Unable to Find Item" });
         }
 
-        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
             [actor.user_id, board_id, card_id, 'ADDED_ITEM', JSON.stringify({ user: actor.user_name, item: item[0].item_text })]
@@ -779,7 +784,7 @@ exports.addItem = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'item:created', { item: item[0] });
+        emitBoard(board_id, 'item:created', { item: item[0] });
         res.json({ message: "Checklist Item Created Successfully!", item: item[0] })
     } finally { if (connection) await connection.release() }
 });
@@ -818,7 +823,7 @@ exports.updateItem = catchAsync(async (req, res) => {
         )
 
         if (Number(updatedCompleted) === 1 && Number(getItem[0].is_completed) !== 1) {
-            const actor = await messageHandler.getUser(req.session.user.user_id);
+            const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
             await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
                 [actor.user_id, board_id, card_id, 'COMPLETED_ITEM', JSON.stringify({ user: actor.user_name, item: updatedText })]
@@ -827,7 +832,7 @@ exports.updateItem = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'item:updated', { item_id, changes: { updatedText, updatedCompleted } });
+        emitBoard(board_id, 'item:updated', { item_id, changes: { updatedText, updatedCompleted } });
         res.json({ message: "Checklist Item Patched Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -840,6 +845,7 @@ exports.removeItem = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const item_id = req.params.item_id || req.body.item_id;
+        const board_id = req.body.board_id;
 
         await connection.beginTransaction();
 
@@ -849,13 +855,12 @@ exports.removeItem = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'item:deleted', { item_id });
+        if (board_id) emitBoard(board_id, 'item:deleted', { item_id });
         res.json({ message: "Checklist Item was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
 
 //-----ATTACHMENT HANDLING-----\\
-// REFRESH
 
 async function cleanupFile(filePath = []) {
     for (const file of filePath) {
@@ -904,7 +909,7 @@ exports.addAttachment = catchAsync(async (req, res) => {
             [board_id, list_id, card_id, attachment_name, filePath, external_url, attachmentType, mimeType, fileSize, user_id]
         );
 
-        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
             [actor.user_id, board_id, card_id, 'ATTACHMENT_ADDED', JSON.stringify({ user: actor.user_name, attachment: attachment_name })]
@@ -912,7 +917,7 @@ exports.addAttachment = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'attachment:added', { card_id, attachment_name });
+        emitBoard(board_id, 'attachment:added', { card_id, attachment_name });
         res.json({ message: "Media Attached Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -924,7 +929,7 @@ exports.editAttachment = catchAsync(async (req, res) => {
         connection = await db.getConnection();
 
         const attachment_id = req.params.attachment_id || req.body.attachment_id;
-        const { attachment_name, external_url } = req.body;
+        let { attachment_name, external_url, board_id } = req.body;
 
         await connection.beginTransaction();
 
@@ -941,7 +946,6 @@ exports.editAttachment = catchAsync(async (req, res) => {
             external_url = null;
         } else if (external_url) {
             attachment_name = attachment_name || external_url;
-            external_url = external_url;
         } else {
             return res.status(400).json({ message: "None Media Provided!" });
         }
@@ -950,11 +954,9 @@ exports.editAttachment = catchAsync(async (req, res) => {
             [attachment_name, external_url, attachment_id]
         );
 
-        // NOTE: UPDATE ONLY NAME AND URL BUT NO MOVE ATTACHMENT FEATURE
-
-        emitBoard(req, board_id, 'attachment:updated', { attachment_id, attachment_name });
         await connection.commit();
 
+        if (board_id) emitBoard(board_id, 'attachment:updated', { attachment_id, attachment_name });
         res.json({ message: "Attachment Edited Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -986,7 +988,7 @@ exports.removeAttachment = catchAsync(async (req, res) => {
             [attachment_id]
         )
 
-        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
             [actor.user_id, board_id, card_id, 'ATTACHMENT_REMOVED', JSON.stringify({ user: actor.user_name, attachment: attachment_name })]
@@ -1001,7 +1003,7 @@ exports.removeAttachment = catchAsync(async (req, res) => {
                 .catch(err => console.error('Attachment File Deletion Failed:', err));
         }
 
-        emitBoard(req, board_id, 'attachment:removed', { attachment_id });
+        emitBoard(board_id, 'attachment:removed', { attachment_id });
         res.json({ message: "Attachment was Deleted Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -1023,7 +1025,7 @@ exports.archiveList = catchAsync(async (req, res) => {
 
     const event = is_archived ? 'list:archived' : 'list:unarchived';
 
-    emitBoard(req, board_id, event, { list: list[0] });
+    emitBoard(board_id, event, { list: list[0] });
     res.json({ message: is_archived ? 'List Archived.' : 'List Unarchived.', list: list[0] });
 });
 
@@ -1052,10 +1054,9 @@ exports.archiveCard = catchAsync(async (req, res) => {
 
     const event = is_archived ? 'card:archived' : 'card:unarchived';
 
-    emitBoard(req, board_id, event, { card: card[0] });
+    emitBoard(board_id, event, { card: card[0] });
     res.json({ message: is_archived ? 'Card Archived.' : 'Card Unarchived.', card: card[0] });
 });
-
 
 exports.getArchivedCard = catchAsync(async (req, res) => {
     const board_id = req.params.board_id || req.body.board_id;
@@ -1091,7 +1092,6 @@ exports.getActivityLogs = catchAsync(async (req, res) => {
     res.json({ message: "User's Activity Logs were Retrieved!", activity_logs: activity_logs })
 });
 
-//REFRESH UNLESS DIFFERENT BOARD/LIST
 exports.moveCard = catchAsync(async (req, res) => {
     let connection;
 
@@ -1129,7 +1129,7 @@ exports.moveCard = catchAsync(async (req, res) => {
             [new_list_id]
         )
 
-        const actor = await messageHandler.getUser(req.session.user.user_id);
+        const actor = await messageHandler.getUser(req.session.user.user_id, connection);
 
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
             [actor.user_id, board_id, card_id, 'MOVED_CARD', JSON.stringify({ user: actor.user_name, beforeList: AList[0].list_name, afterList: BList[0].list_name })]
@@ -1137,15 +1137,13 @@ exports.moveCard = catchAsync(async (req, res) => {
 
         await connection.commit();
 
-        emitBoard(req, board_id, 'card:moved', { card_id, from_list: cardResult[0].list_id, to_list: new_list_id, position: new_position });
+        emitBoard(board_id, 'card:moved', { card_id, from_list: cardResult[0].list_id, to_list: new_list_id, position: new_position });
         res.json({ message: "Card Moved Successfully!" });
     } finally { if (connection) await connection.release() }
 });
 
-// REFRESH UNLESS DIFFERENT BOARD/LIST
 exports.duplicateCard = catchAsync(async (req, res) => {
     let connection;
-
     const duplicatedFiles = [];
 
     try {
@@ -1158,162 +1156,74 @@ exports.duplicateCard = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [board] = await connection.query('SELECT board_title FROM board WHERE board_id = ?',
-            [board_id]
-        )
+        const [board] = await connection.query('SELECT board_title FROM board WHERE board_id = ?', [board_id])
+        if (board.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Board Not Found!" }); }
 
-        if (board.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ message: "Board Not Found!" });
-        }
-
-        const [boardMembers] = await connection.query('SELECT user_id FROM board_user WHERE board_id = ?',
-            [board_id]
-        );
-
+        const [boardMembers] = await connection.query('SELECT user_id FROM board_user WHERE board_id = ?', [board_id]);
         const boardMemberSet = new Set(boardMembers.map(u => u.user_id));
 
-        const [exist] = await connection.query('SELECT t1.* FROM list AS t1 JOIN board AS t2 ON t1.board_id = t2.board_id WHERE t2.board_id = ? AND t1.list_id = ?',
-            [new_board_id, new_list_id]
-        )
+        const [exist] = await connection.query('SELECT t1.* FROM list AS t1 JOIN board AS t2 ON t1.board_id = t2.board_id WHERE t2.board_id = ? AND t1.list_id = ?', [new_board_id, new_list_id])
+        if (exist.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Nonexisting Object Upon Card Duplication!" }); }
 
-        if (exist.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ message: "Nonexisting Object Upon Card Duplication!" });
-        }
-
-        const [cardResult] = await connection.query('SELECT * FROM card WHERE card_id = ?',
-            [card_id]
-        )
-
-        if (cardResult.length === 0) {
-            await connection.rollback()
-            return res.status(404).json({ message: "Card Not Found!" });
-        }
+        const [cardResult] = await connection.query('SELECT * FROM card WHERE card_id = ?', [card_id])
+        if (cardResult.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Card Not Found!" }); }
 
         const card = cardResult[0];
-
         const [dupCard] = await connection.query('INSERT INTO card (card_name, card_description, card_position, due_date, due_time, list_id, completed) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [card.card_name, card.card_description, new_position, card.due_date, card.due_time, new_list_id, card.completed]
-        )
+            [card.card_name, card.card_description, new_position, card.due_date, card.due_time, new_list_id, card.completed])
+        const new_card_id = dupCard.insertId;
 
-        const new_card_id = dupCard.insertId
-
-        const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?',
-            [card_id]
-        );
-
-        if (attachments.length > 0) {
-            for (const attachment of attachments) {
-                let newFilePath = null;
-
-                if (attachment.attachment_type === 'file' && attachment.file_path) {
-                    newFilePath = await duplicateAttachmentFile(attachment.file_path, new_card_id);
-                    duplicatedFiles.push(newFilePath);
-                }
-
-                await connection.query('INSERT INTO attachments (board_id, list_id, card_id, attachment_name, file_path, external_url, attachment_type, mime_type, file_size, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    [new_board_id, new_list_id, new_card_id, attachment.attachment_name, newFilePath, attachment.external_url, attachment.attachment_type, attachment.mime_type, attachment.file_size, user_id]
-                );
+        const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?', [card_id]);
+        for (const attachment of attachments) {
+            let newFilePath = null;
+            if (attachment.attachment_type === 'file' && attachment.file_path) {
+                newFilePath = await duplicateAttachmentFile(attachment.file_path, new_card_id);
+                duplicatedFiles.push(newFilePath);
             }
+            await connection.query('INSERT INTO attachments (board_id, list_id, card_id, attachment_name, file_path, external_url, attachment_type, mime_type, file_size, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [new_board_id, new_list_id, new_card_id, attachment.attachment_name, newFilePath, attachment.external_url, attachment.attachment_type, attachment.mime_type, attachment.file_size, user_id]);
         }
 
-        const [checklist] = await connection.query('SELECT * FROM checklist WHERE card_id = ?',
-            [card_id]
-        );
-
-        if (checklist.length > 0) {
-            for (const chgroup of checklist) {
-                const [newChecklist] = await connection.query('INSERT INTO checklist (card_id, checklist_title, checklist_position) VALUES (?, ?, ?)',
-                    [new_card_id, chgroup.checklist_title, chgroup.checklist_position]
-                );
-
-                const new_checklist_id = newChecklist.insertId;
-
-                const [items] = await connection.query('SELECT * FROM checklist_items WHERE checklist_id = ?',
-                    [chgroup.checklist_id]
-                );
-
-                for (const item of items) {
-                    const [newItem] = await connection.query('INSERT INTO checklist_items (checklist_id, item_text, is_completed) VALUES (?, ?, ?)',
-                        [new_checklist_id, item.item_text, item.is_completed]
-                    );
-
-                    const new_item_id = newItem.insertId;
-
-                    const [assignedUsers] = await connection.query('SELECT user_id FROM assigned_checklist WHERE item_id = ?',
-                        [item.item_id]
-                    );
-
-                    for (const au of assignedUsers) {
-                        if (boardMemberSet.has(au.user_id)) {
-                            await connection.query('INSERT INTO assigned_checklist (item_id, user_id) VALUES (?, ?)',
-                                [new_item_id, au.user_id]
-                            );
-                        }
-                    }
+        const [checklist] = await connection.query('SELECT * FROM checklist WHERE card_id = ?', [card_id]);
+        for (const chgroup of checklist) {
+            const [newChecklist] = await connection.query('INSERT INTO checklist (card_id, checklist_title, checklist_position) VALUES (?, ?, ?)', [new_card_id, chgroup.checklist_title, chgroup.checklist_position]);
+            const new_checklist_id = newChecklist.insertId;
+            const [items] = await connection.query('SELECT * FROM checklist_items WHERE checklist_id = ?', [chgroup.checklist_id]);
+            for (const item of items) {
+                const [newItem] = await connection.query('INSERT INTO checklist_items (checklist_id, item_text, is_completed) VALUES (?, ?, ?)', [new_checklist_id, item.item_text, item.is_completed]);
+                const new_item_id = newItem.insertId;
+                const [assignedUsers] = await connection.query('SELECT user_id FROM assigned_checklist WHERE item_id = ?', [item.item_id]);
+                for (const au of assignedUsers) {
+                    if (boardMemberSet.has(au.user_id)) await connection.query('INSERT INTO assigned_checklist (item_id, user_id) VALUES (?, ?)', [new_item_id, au.user_id]);
                 }
             }
         }
 
-        const [labels] = await connection.query('SELECT label_id FROM card_labels WHERE card_id = ?',
-            [card_id]
-        );
+        const [labels] = await connection.query('SELECT label_id FROM card_labels WHERE card_id = ?', [card_id]);
+        for (const lbl of labels) await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)', [new_card_id, lbl.label_id]);
 
-        for (const lbl of labels) {
-            await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)',
-                [new_card_id, lbl.label_id]
-            );
-        };
-
-        const [members] = await connection.query('SELECT t1.user_id FROM card_member AS t1 JOIN board_user AS t2 ON t1.user_id = t2.user_id WHERE t1.card_id = ? AND t2.board_id = ?',
-            [card_id, new_board_id]
-        );
-
-        if (members.length > 0) {
-            for (const member of members) {
-                await connection.query(
-                    'INSERT INTO card_member (card_id, user_id) VALUES (?, ?)',
-                    [new_card_id, member.user_id]
-                );
-            }
-        }
+        const [members] = await connection.query('SELECT t1.user_id FROM card_member AS t1 JOIN board_user AS t2 ON t1.user_id = t2.user_id WHERE t1.card_id = ? AND t2.board_id = ?', [card_id, new_board_id]);
+        for (const member of members) await connection.query('INSERT INTO card_member (card_id, user_id) VALUES (?, ?)', [new_card_id, member.user_id]);
 
         const actor = await messageHandler.getUser(user_id, connection);
-
-        const list_name = exist[0].list_name;
-        const board_title = board[0].board_title;
-
         await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
-            [actor.user_id, new_board_id, new_card_id, 'COPIED_CARD', JSON.stringify({ user: actor.user_name, board: board_title, list: list_name })]
-        )
+            [actor.user_id, new_board_id, new_card_id, 'COPIED_CARD', JSON.stringify({ user: actor.user_name, board: board[0].board_title, list: exist[0].list_name })])
 
         await connection.commit();
 
-        emitBoard(req, new_board_id, 'card:duplicated', { new_card_id });
+        emitBoard(new_board_id, 'card:duplicated', { new_card_id });
         res.json({ message: "Card Duplicated Successfully!" });
     } catch (err) {
-        if (connection) {
-            await connection.rollback();
-        }
-
+        if (connection) await connection.rollback();
         for (const filePath of duplicatedFiles) {
-            try {
-                const fullPath = path.join(__dirname, '../public', filePath);
-                await fs.unlink(fullPath);
-            } catch (cleanupError) {
-                console.error('Failed to Clean up Duplicated File:', filePath, cleanupError);
-            }
+            try { await fs.unlink(path.join(__dirname, '../public', filePath)); } catch (e) { console.error('Cleanup failed:', filePath, e); }
         }
-
         throw err;
     } finally { if (connection) await connection.release() }
 })
 
-// REFRESH UNLESS DIFFERENT BOARD/LIST
 exports.duplicateList = catchAsync(async (req, res) => {
     let connection;
-
     const duplicatedFiles = [];
 
     try {
@@ -1325,197 +1235,97 @@ exports.duplicateList = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [boardResult] = await connection.query('SELECT * FROM board WHERE board_id = ?',
-            [board_id]
-        );
+        const [boardResult] = await connection.query('SELECT * FROM board WHERE board_id = ?', [board_id]);
+        if (boardResult.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Board Not Found!" }); }
 
-        if (boardResult.length === 0) {
-            await connection.rollback()
-            return res.status(404).json({ message: "Board Not Found!" });
-        }
+        const [listResult] = await connection.query('SELECT * FROM list WHERE list_id = ?', [list_id]);
+        if (listResult.length === 0) { await connection.rollback(); return res.status(404).json({ message: "List Not Found!" }); }
 
-        const [listResult] = await connection.query('SELECT * FROM list WHERE list_id = ?',
-            [list_id]
-        );
-
-        if (listResult.length === 0) {
-            await connection.rollback()
-            return res.status(404).json({ message: "List Not Found!" });
-        }
-
-        const [boardMembers] = await connection.query('SELECT user_id FROM board_user WHERE board_id = ?',
-            [listResult[0].board_id]
-        );
-
+        const [boardMembers] = await connection.query('SELECT user_id FROM board_user WHERE board_id = ?', [listResult[0].board_id]);
         const boardMemberSet = new Set(boardMembers.map(u => u.user_id));
 
         if (board_id === listResult[0].board_id) {
-            await connection.query('UPDATE list SET list_position = list_position + 1 WHERE board_id = ? AND list_position > ?',
-                [listResult[0].board_id, listResult[0].list_position]
-            );
+            await connection.query('UPDATE list SET list_position = list_position + 1 WHERE board_id = ? AND list_position > ?', [listResult[0].board_id, listResult[0].list_position]);
         } else {
-            const [checkMembers] = await connection.query('SELECT * FROM board_user WHERE board_id = ?',
-                [board_id]
-            )
-
-            if (checkMembers.length > 0) {
-                for (const nbm of checkMembers) {
-                    if (!boardMemberSet.has(nbm.user_id)) {
-                        await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)',
-                            [board_id, nbm.user_id, nbm.role]
-                        )
-                    }
-                }
+            const [checkMembers] = await connection.query('SELECT * FROM board_user WHERE board_id = ?', [board_id]);
+            for (const nbm of checkMembers) {
+                if (!boardMemberSet.has(nbm.user_id)) await connection.query('INSERT INTO board_user (board_id, user_id, role) VALUES (?, ?, ?)', [board_id, nbm.user_id, nbm.role]);
             }
         }
 
-        const [result] = await connection.query('INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)',
-            [board_id, `${listResult[0].list_name} (Copy)`, listResult[0].list_position + 1]
-        );
-
+        const [result] = await connection.query('INSERT INTO list (board_id, list_name, list_position) VALUES (?, ?, ?)', [board_id, `${listResult[0].list_name} (Copy)`, listResult[0].list_position + 1]);
         const new_list_id = result.insertId;
 
-        const [cards] = await connection.query('SELECT * FROM card WHERE list_id = ?',
-            [list_id]
-        );
-
+        const [cards] = await connection.query('SELECT * FROM card WHERE list_id = ?', [list_id]);
         for (const card of cards) {
             const [newCardResult] = await connection.query('INSERT INTO card (list_id, card_name, card_description, card_position, due_date, due_time) VALUES (?, ?, ?, ?, ?, ?)',
-                [new_list_id, card.card_name, card.card_description, card.card_position, card.due_date, card.due_time]
-            );
-
+                [new_list_id, card.card_name, card.card_description, card.card_position, card.due_date, card.due_time]);
             const new_card_id = newCardResult.insertId;
 
-            const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?',
-                [card.card_id]
-            );
-
-            if (attachments.length > 0) {
-                for (const attachment of attachments) {
-                    let newFilePath = null;
-
-                    if (attachment.attachment_type === 'file' && attachment.file_path) {
-                        newFilePath = await duplicateAttachmentFile(attachment.file_path, new_card_id);
-                        duplicatedFiles.push(newFilePath);
-                    }
-
-                    await connection.query(
-                        'INSERT INTO attachments (board_id, list_id, card_id, attachment_name, file_path, external_url, attachment_type, mime_type, file_size, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        [board_id, new_list_id, new_card_id, attachment.attachment_name, newFilePath, attachment.external_url, attachment.attachment_type, attachment.mime_type, attachment.file_size, user_id]
-                    );
+            const [attachments] = await connection.query('SELECT * FROM attachments WHERE card_id = ?', [card.card_id]);
+            for (const attachment of attachments) {
+                let newFilePath = null;
+                if (attachment.attachment_type === 'file' && attachment.file_path) {
+                    newFilePath = await duplicateAttachmentFile(attachment.file_path, new_card_id);
+                    duplicatedFiles.push(newFilePath);
                 }
+                await connection.query('INSERT INTO attachments (board_id, list_id, card_id, attachment_name, file_path, external_url, attachment_type, mime_type, file_size, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [board_id, new_list_id, new_card_id, attachment.attachment_name, newFilePath, attachment.external_url, attachment.attachment_type, attachment.mime_type, attachment.file_size, user_id]);
             }
 
-            const [checklist] = await connection.query('SELECT * FROM checklist WHERE card_id = ?',
-                [card.card_id]
-            );
-
-            if (checklist.length > 0) {
-                for (const chgroup of checklist) {
-                    const [newChecklist] = await connection.query('INSERT INTO checklist (card_id, checklist_title, checklist_position) VALUES (?, ?, ?)',
-                        [new_card_id, chgroup.checklist_title, chgroup.checklist_position]
-                    );
-
-                    const new_checklist_id = newChecklist.insertId;
-
-                    const [items] = await connection.query('SELECT * FROM checklist_items WHERE checklist_id = ?',
-                        [chgroup.checklist_id]
-                    );
-
-                    for (const item of items) {
-                        const [newItem] = await connection.query('INSERT INTO checklist_items (checklist_id, item_text, is_completed) VALUES (?, ?, ?)',
-                            [new_checklist_id, item.item_text, item.is_completed]
-                        );
-
-                        const new_item_id = newItem.insertId;
-
-                        const [assignedUsers] = await connection.query('SELECT user_id FROM assigned_checklist WHERE item_id = ?',
-                            [item.item_id]
-                        );
-
-                        for (const au of assignedUsers) {
-                            if (boardMemberSet.has(au.user_id)) {
-                                await connection.query('INSERT INTO assigned_checklist (item_id, user_id) VALUES (?, ?)',
-                                    [new_item_id, au.user_id]
-                                );
-                            }
-                        }
+            const [checklist] = await connection.query('SELECT * FROM checklist WHERE card_id = ?', [card.card_id]);
+            for (const chgroup of checklist) {
+                const [newChecklist] = await connection.query('INSERT INTO checklist (card_id, checklist_title, checklist_position) VALUES (?, ?, ?)', [new_card_id, chgroup.checklist_title, chgroup.checklist_position]);
+                const new_checklist_id = newChecklist.insertId;
+                const [items] = await connection.query('SELECT * FROM checklist_items WHERE checklist_id = ?', [chgroup.checklist_id]);
+                for (const item of items) {
+                    const [newItem] = await connection.query('INSERT INTO checklist_items (checklist_id, item_text, is_completed) VALUES (?, ?, ?)', [new_checklist_id, item.item_text, item.is_completed]);
+                    const new_item_id = newItem.insertId;
+                    const [assignedUsers] = await connection.query('SELECT user_id FROM assigned_checklist WHERE item_id = ?', [item.item_id]);
+                    for (const au of assignedUsers) {
+                        if (boardMemberSet.has(au.user_id)) await connection.query('INSERT INTO assigned_checklist (item_id, user_id) VALUES (?, ?)', [new_item_id, au.user_id]);
                     }
                 }
             }
 
-            const [labels] = await connection.query('SELECT t1.label_id, t2.label_color, t2.label_name FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?',
-                [card.card_id]
-            );
-
+            const [labels] = await connection.query('SELECT t1.label_id, t2.label_color, t2.label_name FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?', [card.card_id]);
             for (const lbl of labels) {
                 let target_label_id;
-
                 if (board_id === listResult[0].board_id) {
                     target_label_id = lbl.label_id;
                 } else {
-                    const [existingLabel] = await connection.query('SELECT label_id FROM labels WHERE board_id = ? AND label_color = ?',
-                        [board_id, lbl.label_color]
-                    );
-
+                    const [existingLabel] = await connection.query('SELECT label_id FROM labels WHERE board_id = ? AND label_color = ?', [board_id, lbl.label_color]);
                     if (existingLabel.length > 0) {
                         target_label_id = existingLabel[0].label_id;
                     } else {
-                        const [newLabel] = await connection.query('INSERT INTO labels (board_id, label_color, label_name) VALUES (?, ?, ?)',
-                            [board_id, lbl.label_color, lbl.label_name]
-                        );
+                        const [newLabel] = await connection.query('INSERT INTO labels (board_id, label_color, label_name) VALUES (?, ?, ?)', [board_id, lbl.label_color, lbl.label_name]);
                         target_label_id = newLabel.insertId;
                     }
                 }
-
-                await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)',
-                    [new_card_id, target_label_id]
-                );
+                await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)', [new_card_id, target_label_id]);
             }
 
-            const [members] = await connection.query('SELECT t1.user_id FROM card_member AS t1 JOIN board_user AS t2 ON t1.user_id = t2.user_id WHERE t1.card_id = ? AND t2.board_id = ?',
-                [card.card_id, listResult[0].board_id]
-            );
-
-            if (members.length > 0) {
-                for (const member of members) {
-                    await connection.query('INSERT INTO card_member (card_id, user_id) VALUES (?, ?)',
-                        [new_card_id, member.user_id]
-                    );
-                }
-            }
+            const [members] = await connection.query('SELECT t1.user_id FROM card_member AS t1 JOIN board_user AS t2 ON t1.user_id = t2.user_id WHERE t1.card_id = ? AND t2.board_id = ?', [card.card_id, listResult[0].board_id]);
+            for (const member of members) await connection.query('INSERT INTO card_member (card_id, user_id) VALUES (?, ?)', [new_card_id, member.user_id]);
 
             const actor = await messageHandler.getUser(user_id, connection);
-
-            const list_name = listResult[0].list_name;
-            const board_title = boardResult[0].board_title;
-
             await connection.query('INSERT INTO activity_logs (user_id, board_id, card_id, action_type, action_data) VALUES (?, ?, ?, ?, ?)',
-                [actor.user_id, listResult[0].board_id, new_card_id, 'COPIED_CARD', JSON.stringify({ user: actor.user_name, board: board_title, list: list_name })]
-            )
+                [actor.user_id, listResult[0].board_id, new_card_id, 'COPIED_CARD', JSON.stringify({ user: actor.user_name, board: boardResult[0].board_title, list: listResult[0].list_name })])
         }
 
         await connection.commit();
+
+        emitBoard(board_id, 'list:duplicated', { new_list_id });
         res.json({ message: "List Duplicated Successfully!" });
     } catch (err) {
-        if (connection) {
-            await connection.rollback();
-        }
-
+        if (connection) await connection.rollback();
         for (const filePath of duplicatedFiles) {
-            try {
-                const fullPath = path.join(__dirname, '../public', filePath);
-                await fs.unlink(fullPath);
-            } catch (cleanupError) {
-                console.error('Failed to Clean up Duplicated File:', filePath, cleanupError);
-            }
+            try { await fs.unlink(path.join(__dirname, '../public', filePath)); } catch (e) { console.error('Cleanup failed:', filePath, e); }
         }
-
         throw err;
     } finally { if (connection) await connection.release() }
 });
 
-// REFRESH
 exports.moveList = catchAsync(async (req, res) => {
     let connection;
 
@@ -1528,98 +1338,45 @@ exports.moveList = catchAsync(async (req, res) => {
 
         await connection.beginTransaction();
 
-        const [boardResult] = await connection.query('SELECT * FROM board WHERE board_id = ?',
-            [target_board_id]
-        );
+        const [boardResult] = await connection.query('SELECT * FROM board WHERE board_id = ?', [target_board_id]);
+        if (boardResult.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Target Board Not Found!" }); }
 
-        if (boardResult.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ message: "Target Board Not Found!" });
-        }
-
-        const [listResult] = await connection.query('SELECT * FROM list WHERE list_id = ?',
-            [list_id]
-        );
-
-        if (listResult.length === 0) {
-            await connection.rollback();
-            return res.status(404).json({ message: "List Not Found!" });
-        }
+        const [listResult] = await connection.query('SELECT * FROM list WHERE list_id = ?', [list_id]);
+        if (listResult.length === 0) { await connection.rollback(); return res.status(404).json({ message: "List Not Found!" }); }
 
         const original_board_id = listResult[0].board_id;
+        if (target_board_id === original_board_id) { await connection.rollback(); return res.json({ message: "List is already on this board!" }); }
 
-        if (target_board_id === original_board_id) {
-            await connection.rollback();
-            return res.json({ message: "List is already on this board!" });
-        }
-
-        const [maxPosition] = await connection.query('SELECT MAX(list_position) as max_pos FROM list WHERE board_id = ?',
-            [target_board_id]
-        );
-
+        const [maxPosition] = await connection.query('SELECT MAX(list_position) as max_pos FROM list WHERE board_id = ?', [target_board_id]);
         const new_position = (maxPosition[0].max_pos || 0) + 1;
 
-        await connection.query('UPDATE list SET board_id = ?, list_position = ? WHERE list_id = ?',
-            [target_board_id, new_position, list_id]
-        );
+        await connection.query('UPDATE list SET board_id = ?, list_position = ? WHERE list_id = ?', [target_board_id, new_position, list_id]);
+        await connection.query('UPDATE list SET list_position = list_position - 1 WHERE board_id = ? AND list_position > ?', [original_board_id, listResult[0].list_position]);
 
-        await connection.query('UPDATE list SET list_position = list_position - 1 WHERE board_id = ? AND list_position > ?',
-            [original_board_id, listResult[0].list_position]
-        );
-
-        const [cards] = await connection.query('SELECT card_id FROM card WHERE list_id = ?',
-            [list_id]
-        );
-
+        const [cards] = await connection.query('SELECT card_id FROM card WHERE list_id = ?', [list_id]);
         if (cards.length > 0) {
             const card_ids = cards.map(c => c.card_id);
-            await connection.query(`UPDATE attachments SET board_id = ? WHERE card_id IN (${card_ids.map(() => '?').join(',')})`,
-                [target_board_id, ...card_ids]
-            );
+            await connection.query(`UPDATE attachments SET board_id = ? WHERE card_id IN (${card_ids.map(() => '?').join(',')})`, [target_board_id, ...card_ids]);
         }
 
         for (const card of cards) {
-            const [cardLabels] = await connection.query('SELECT t1.label_id, t2.label_color, t2.label_name FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?',
-                [card.card_id]
-            );
-
+            const [cardLabels] = await connection.query('SELECT t1.label_id, t2.label_color, t2.label_name FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?', [card.card_id]);
             if (cardLabels.length > 0) {
-                await connection.query('DELETE FROM card_labels WHERE card_id = ?',
-                    [card.card_id]
-                );
-
+                await connection.query('DELETE FROM card_labels WHERE card_id = ?', [card.card_id]);
                 for (const lbl of cardLabels) {
-                    const [existingLabel] = await connection.query('SELECT label_id FROM labels WHERE board_id = ? AND label_color = ?',
-                        [target_board_id, lbl.label_color]
-                    );
-
+                    const [existingLabel] = await connection.query('SELECT label_id FROM labels WHERE board_id = ? AND label_color = ?', [target_board_id, lbl.label_color]);
                     let target_label_id;
-
-                    if (existingLabel.length > 0) {
-                        target_label_id = existingLabel[0].label_id;
-                    } else {
-                        const [newLabel] = await connection.query('INSERT INTO labels (board_id, label_color, label_name) VALUES (?, ?, ?)',
-                            [target_board_id, lbl.label_color, lbl.label_name]
-                        );
-                        target_label_id = newLabel.insertId;
-                    }
-
-                    await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)',
-                        [card.card_id, target_label_id]
-                    );
+                    if (existingLabel.length > 0) { target_label_id = existingLabel[0].label_id; }
+                    else { const [newLabel] = await connection.query('INSERT INTO labels (board_id, label_color, label_name) VALUES (?, ?, ?)', [target_board_id, lbl.label_color, lbl.label_name]); target_label_id = newLabel.insertId; }
+                    await connection.query('INSERT INTO card_labels (card_id, label_id) VALUES (?, ?)', [card.card_id, target_label_id]);
                 }
             }
         }
 
-        const actor = await messageHandler.getUser(user_id, connection);
-        const list_name = listResult[0].list_name;
-        const board_title = boardResult[0].board_title;
-
         await connection.commit();
 
-        emit.emitToBoard(req, original_board_id, 'list:moved-out', { list_id, to_board_id: target_board_id });
-
-        emit.emitToBoard(req, target_board_id, 'list:moved-in', { list_id, from_board_id: original_board_id, new_position });
+        emit.toBoard(original_board_id, 'list:moved-out', { list_id, to_board_id: target_board_id });
+emit.toBoard(target_board_id, 'list:moved-in', { list_id, from_board_id: original_board_id, new_position });
         res.json({ message: "List Moved Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -1638,27 +1395,18 @@ exports.convertCard = catchAsync(async (req, res) => {
             [item_id, board_id]
         );
 
-        if (itemData.length === 0) {
-            await connection.rollback()
-            return res.status(404).json({ message: "Checklist Item Not Found!" });
-        }
+        if (itemData.length === 0) { await connection.rollback(); return res.status(404).json({ message: "Checklist Item Not Found!" }); }
 
         const checklistItem = itemData[0];
-
-        const [positionResult] = await connection.query(
-            'SELECT MAX(card_position) as max_position FROM card WHERE list_id = ?',
-            [checklistItem.list_id]
-        );
-
+        const [positionResult] = await connection.query('SELECT MAX(card_position) as max_position FROM card WHERE list_id = ?', [checklistItem.list_id]);
         const lastPosition = positionResult[0].max_position || 0;
 
         await connection.query('INSERT INTO card (list_id, card_name, card_description, card_position, due_date, due_time) VALUES (?, ?, ?, ?, ?, ?)',
-            [checklistItem.list_id, checklistItem.item_text, '', lastPosition + 1, checklistItem.due_date, checklistItem.due_time]
-        );
+            [checklistItem.list_id, checklistItem.item_text, '', lastPosition + 1, checklistItem.due_date, checklistItem.due_time]);
 
         await connection.commit();
 
-        emit.emitToBoard(req, board_id, 'card:created', { list_id: checklistItem.list_id, card: { card_name: checklistItem.item_text, due_date: checklistItem.due_date, due_time: checklistItem.due_time } });
+        emitBoard(board_id, 'card:created', { list_id: checklistItem.list_id, card: { card_name: checklistItem.item_text, due_date: checklistItem.due_date, due_time: checklistItem.due_time } });
         res.json({ message: "Checklist Item Converted to Card Successfully!" });
     } finally { if (connection) await connection.release() }
 });
@@ -1670,29 +1418,17 @@ exports.userCard = catchAsync(async (req, res) => {
         [user_id]
     );
 
-    if (result.length === 0) {
-        return res.json({ message: "Retrieved User's Cards!", cards: [] })
-    }
+    if (result.length === 0) return res.json({ message: "Retrieved User's Cards!", cards: [] });
 
     const card_ids = result.map(c => c.card_id);
-
     const labelMap = new Map();
 
-    const [labels] = await db.query('SELECT t1.card_id, t2.* FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id = ?',
-        [card_ids]
-    );
-
+    const [labels] = await db.query('SELECT t1.card_id, t2.* FROM card_labels AS t1 JOIN labels AS t2 ON t1.label_id = t2.label_id WHERE t1.card_id IN (?)', [card_ids]);
     labels.forEach(label => {
-        if (!labelMap.has(label.card_id)) {
-            labelMap.set(label.card_id, []);
-        }
-
+        if (!labelMap.has(label.card_id)) labelMap.set(label.card_id, []);
         labelMap.get(label.card_id).push(label);
     })
-
-    result.forEach(card => {
-        card.labels = labelMap.get(card.card_id) || [];
-    })
+    result.forEach(card => { card.labels = labelMap.get(card.card_id) || []; })
 
     return res.json({ message: "Retrieved User's Cards!", cards: result })
 })
@@ -1704,13 +1440,9 @@ exports.userActivity = catchAsync(async (req, res) => {
         [user_id]
     )
 
-    if (result.length === 0) {
-        return res.json({ message: "Retrieved User's Activity", activity_logs: [] })
-    }
+    if (result.length === 0) return res.json({ message: "Retrieved User's Activity", activity_logs: [] });
 
-    for (const log of result) {
-        log.message = messageHandler.buildActivity(log)
-    }
+    for (const log of result) { log.message = messageHandler.buildActivity(log) }
 
-    res.json({ message: "Retrieved User's were Retrieved!", activity_logs: result })
+    res.json({ message: "Retrieved User's Activity Logs!", activity_logs: result })
 })
